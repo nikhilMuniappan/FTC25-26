@@ -23,11 +23,12 @@ public class SkystoneAutoSpeciSide extends LinearOpMode{
 
         while(!isStopRequested()){
             if(gamepad1.a){
-                //moveForward();
+                moveForward(0.3, 500);
                 RightFront.setPower(-0.5);
                 RightBack.setPower(-0.5);
                 LeftFront.setPower(0.5);
                 LeftBack.setPower(0.5);
+                moveForward(0.3, 2000);
             }
         }
     }
