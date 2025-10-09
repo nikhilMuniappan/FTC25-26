@@ -15,7 +15,7 @@ public class motorTesting extends LinearOpMode{
     private DcMotor FrontRight;
     private DcMotor BackLeft;
     private DcMotor BackRight;
-    private DcMotor Arm;
+
 
     @Override
     public void runOpMode() throws InterruptedException{

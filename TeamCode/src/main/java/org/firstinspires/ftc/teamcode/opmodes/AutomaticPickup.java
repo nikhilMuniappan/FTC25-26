@@ -13,8 +13,8 @@ import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.SleepAction;
 import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-
-
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
+@Disabled
 @Config
 @Autonomous
 public class AutomaticPickup extends NGAutoOpMode {

@@ -28,6 +28,7 @@ import org.firstinspires.ftc.teamcode.roadrunner.MecanumDrive;
 import org.firstinspires.ftc.teamcode.subsystems.Camera;
 import org.firstinspires.ftc.teamcode.subsystems.Distance;
 import org.firstinspires.ftc.teamcode.subsystems.Intake;
+import org.firstinspires.ftc.teamcode.subsystems.Intake2_0;
 import org.firstinspires.ftc.teamcode.subsystems.Rigging;
 import org.firstinspires.ftc.teamcode.subsystems.TrafficLight;
 import org.firstinspires.ftc.teamcode.subsystems.VihasCameraArm;
@@ -35,10 +36,11 @@ import org.firstinspires.ftc.teamcode.subsystems.VihasCameraArm;
 public abstract class NGAutoOpMode extends LinearOpMode {
     public static ElapsedTime timer;
     public static Intake intake;
+    public static Intake2_0 intake2_0;
     public static MecanumDrive drive;
-    public static TrafficLight trafficLight;
+    //public static TrafficLight trafficLight;
     public static BulkRead bulkRead;
-    public static Rigging rigging;
+    //public static Rigging rigging;
     public static VihasCameraArm vihasCameraArm;
     public static Gamepad currentGamepad1, previousGamepad1;
     private int arm_height_for_specimen = 560;
@@ -46,25 +48,26 @@ public abstract class NGAutoOpMode extends LinearOpMode {
     public void initAuto(Pose2d beginPose){
         bulkRead = new BulkRead(hardwareMap);
         timer = new ElapsedTime();
-        trafficLight = new TrafficLight("front", hardwareMap, telemetry, RobotConstants.red_led, RobotConstants.green_led, timer);
+        //trafficLight = new TrafficLight("front", hardwareMap, telemetry, RobotConstants.red_led, RobotConstants.green_led, timer);
         drive = new MecanumDrive(hardwareMap, beginPose);
-        drive.mountTrafficLight(trafficLight);
+        //drive.mountTrafficLight(trafficLight);
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
-        RobotConstants.auto_transfer = true;
-        vihasCameraArm = new VihasCameraArm(hardwareMap, telemetry);
-        intake = new Intake(hardwareMap, telemetry, timer, trafficLight);
-        currentGamepad1 = new Gamepad();
-        previousGamepad1 = new Gamepad();
-        rigging = new Rigging(hardwareMap, telemetry, timer);
-        rigging.init();
+        intake2_0 = new Intake2_0(hardwareMap, telemetry, timer);
+        //RobotConstants.auto_transfer = true;
+        //vihasCameraArm = new VihasCameraArm(hardwareMap, telemetry);
+        //intake = new Intake(hardwareMap, telemetry, timer, trafficLight);
+        //currentGamepad1 = new Gamepad();
+        //previousGamepad1 = new Gamepad();
+        //rigging = new Rigging(hardwareMap, telemetry, timer);
+        //rigging.init();
 //        rigging.reset();
 
-        intake.init();
-        vihasCameraArm.init();
+        //intake.init();
+        //vihasCameraArm.init();
 
-        intake.slides.setReachedRange(30);
+        //intake.slides.setReachedRange(30);
 //        intake.calculateOffset();
-        intake.moveClaw(RobotConstants.claw_closed);
+        //intake.moveClaw(RobotConstants.claw_closed);
     }
     public Action raiseArmForSpecimen(){
         return new SequentialAction(
@@ -185,7 +188,7 @@ public abstract class NGAutoOpMode extends LinearOpMode {
     }
     public Action scoreSpecimen(Distance rear_distance){
         return new SequentialAction(
-                drive.moveUsingDistance(rear_distance, 4.5, 4, 4.8, false),
+                //drive.moveUsingDistance(rear_distance, 4.5, 4, 4.8, false),
                 intake.slideAction(0)
         );
     }
@@ -201,7 +204,7 @@ public abstract class NGAutoOpMode extends LinearOpMode {
     }
     public Action collectSampleAndScore(Action sampleScore, double ending_claw_pos){
         return new SequentialAction(
-                drive.moveUsingDistance(intake.distance, RobotConstants.TARGET, RobotConstants.TOO_CLOSE, RobotConstants.TOO_FAR, RobotConstants.GIVE_UP),
+                //drive.moveUsingDistance(intake.distance, RobotConstants.TARGET, RobotConstants.TOO_CLOSE, RobotConstants.TOO_FAR, RobotConstants.GIVE_UP),
                 intake.grab(RobotConstants.claw_closed),
                 new ParallelAction(
                         intake.raiseArm(),

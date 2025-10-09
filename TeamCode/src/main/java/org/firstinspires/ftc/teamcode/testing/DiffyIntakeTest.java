@@ -1,5 +1,9 @@
 package org.firstinspires.ftc.teamcode.testing;
 
+import com.qualcomm.robotcore.hardware.Gamepad;
+import com.qualcomm.robotcore.hardware.ServoImplEx;
+import com.qualcomm.robotcore.hardware.PwmControl;
+import com.qualcomm.robotcore.hardware.PwmControl.PwmRange;
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
@@ -7,53 +11,95 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.Servo;
 
-
+@Config
+@TeleOp
 public class DiffyIntakeTest extends LinearOpMode {
-    Servo leftServo;
-    Servo rightServo;
-    Servo clawServo;
-    double left_pos = 0;
-    double right_pos = 0;
-    public static double claw_pos = 0;
-    public static double theta1 = 0;
-    public static double theta2 = 0;
+    private Servo leftServo, rightServo, clawServo;
+    private final Gamepad previous = new Gamepad();
+    private final Gamepad current = new Gamepad();
+
+    public static double tiltIncrement = 0.000000000000000000000005;
+    public static double yawIncrement = 0.00000000000000000000000000000000005;
+    public static double tiltPos = 0.33;
+    public static double yawPos = 0.33;
+    public static double clawOpenPos = 1.0;
+    public static double clawClosedPos = 0.0;
+
+    private boolean clawOpen = false;
+    private boolean lastA = false;
 
     @Override
     public void runOpMode() throws InterruptedException {
-
         leftServo = hardwareMap.get(Servo.class, "left_servo");
         rightServo = hardwareMap.get(Servo.class, "right_servo");
         clawServo = hardwareMap.get(Servo.class, "claw_servo");
+
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
-
         waitForStart();
-//COmment for funsies
-        while(opModeIsActive()) {
+        //Start: Claw closed, diffy half-way(midpoint)
+        clawServo.setPosition(clawClosedPos);
 
-            if (boundClear(theta1, theta2)) {
-                left_pos = (theta1/270) - (theta2/270);
-                right_pos = 1 - (theta1/270) - (theta2/270);
+        while (opModeIsActive()) {
+            previous.copy(current);
+            current.copy(gamepad1);
+
+            boolean dpadPressed = false;
+            double targetTilt = tiltPos;
+            double targetYaw = yawPos;
+
+            if (current.dpad_up) {
+                targetTilt = clamp(tiltPos + tiltIncrement, 0.3, 0.7);
+                dpadPressed = true;
+            }
+            if (current.dpad_down) {
+                targetTilt = clamp(tiltPos - tiltIncrement, 0.3, 0.7);
+                dpadPressed = true;
+            }
+            if (current.dpad_right) {
+                targetYaw = clamp(yawPos + yawIncrement, 0.0, 0.08);
+                dpadPressed = true;
+            }
+            if (current.dpad_left) {
+                targetYaw = clamp(yawPos - yawIncrement, 0.0, 0.08);
+                dpadPressed = true;
             }
 
-            leftServo.setPosition(left_pos);
-            rightServo.setPosition(right_pos);
-            clawServo.setPosition(claw_pos);
+            // Update positions only if D-pad pressed
+            tiltPos = (current.dpad_up || current.dpad_down) ? targetTilt : tiltPos;
+            yawPos = (current.dpad_right || current.dpad_left) ? targetYaw : yawPos;
 
-            telemetry.addData("theta1", theta1);
-            telemetry.addData("theta2", theta2);
-            telemetry.addData("left", left_pos);
-            telemetry.addData("right", right_pos);
-            telemetry.addData("claw", claw_pos);
+            double leftPos = clamp(tiltPos + yawPos - 0.5, 0.3, 0.7);
+            double rightPos = clamp(tiltPos - yawPos + 0.5, 0.3, 0.7);
 
+            // Freeze servos at current position if D-pad not pressed
+            if (!dpadPressed) {
+                leftServo.setPosition(leftServo.getPosition());
+                rightServo.setPosition(rightServo.getPosition());
+            } else {
+                leftServo.setPosition(leftPos);
+                rightServo.setPosition(rightPos);
+            }
+
+            // a to open, a to close
+            if (current.a && !lastA) {
+                clawOpen = !clawOpen;
+                clawServo.setPosition(clawOpen ? clawOpenPos : clawClosedPos);
+            }
+            lastA = current.a;
+
+            telemetry.addData("Tilt", "%.2f", tiltPos);
+            telemetry.addData("Yaw", "%.2f", yawPos);
+            telemetry.addData("LeftServo", "%.2f", leftPos);
+            telemetry.addData("RightServo", "%.2f", rightPos);
+            telemetry.addData("Claw", clawOpen ? "Open" : "Closed");
             telemetry.update();
-        }
 
+            idle();
+        }
     }
 
-    public boolean boundClear(double theta1, double theta2) {
-        double lowerBound = Math.abs(theta1 - 135) - 135;
-        double upperBound = -1 * Math.abs(theta1 - 135) + 135;
-        return (theta2 >= lowerBound && theta2 <= upperBound);
+    private double clamp(double v, double min, double max) {
+        return Math.max(min, Math.min(max, v));
     }
 }
 

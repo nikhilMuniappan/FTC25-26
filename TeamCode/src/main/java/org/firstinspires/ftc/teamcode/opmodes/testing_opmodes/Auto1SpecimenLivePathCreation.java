@@ -234,7 +234,7 @@ public class Auto1SpecimenLivePathCreation extends NGAutoOpMode {
         return new FailoverAction(new ParallelAction(
                     intake.distance.updateAction(),
                     intake.updateAction(),
-                    trafficLight.updateAction(),
+                    //trafficLight.updateAction(),
                     rear_distance.updateAction()
                 ),
                 new NullAction()

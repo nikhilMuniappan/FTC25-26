@@ -5,7 +5,8 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.DcMotor;
-
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 @TeleOp
 public class SkystoneScrimmage extends LinearOpMode { // SSR = Sky Stone Robot // ALSO HAS THE CLAW CODE BUILT IN
 
@@ -18,7 +19,7 @@ public class SkystoneScrimmage extends LinearOpMode { // SSR = Sky Stone Robot /
 
     // Claw Motor //
 
-    public Servo ClawServo; // The "pincher" part of Samanyu's claw
+    public DcMotorSimple ClawServo; // The "pincher" part of Samanyu's claw
     public CRServo RPServo; // The motor that moves the rack and pinion of Samanyu's claw
 
     @Override
@@ -33,7 +34,7 @@ public class SkystoneScrimmage extends LinearOpMode { // SSR = Sky Stone Robot /
 
         // Claw Motors //
 
-        ClawServo = hardwareMap.get(Servo.class, "CLS");
+        ClawServo = hardwareMap.get(DcMotorSimple.class, "CLS");
         RPServo = hardwareMap.get(CRServo.class, "RPS");
 
         waitForStart();
@@ -95,17 +96,23 @@ public class SkystoneScrimmage extends LinearOpMode { // SSR = Sky Stone Robot /
                 LeftFrontMotor.setPower(gamepad1.left_stick_y);
                 LeftBackMotor.setPower(gamepad1.left_stick_y);
             }
+            int ticksAVG = ((RightFrontMotor.getCurrentPosition()+LeftFrontMotor.getCurrentPosition()+RightBackMotor.getCurrentPosition()+LeftBackMotor.getCurrentPosition())/4);
+            telemetry.addData("RightFrontMotor Ticks: ", RightFrontMotor.getCurrentPosition());
+            telemetry.addData("LeftFrontMotor Ticks: ", LeftFrontMotor.getCurrentPosition());
+            telemetry.addData("RightBackMotor Ticks: ", RightBackMotor.getCurrentPosition());
+            telemetry.addData("LeftBackMotor Ticks: ", LeftBackMotor.getCurrentPosition());
+            telemetry.addData("Average Ticks: ", ticksAVG);
+            telemetry.update();
 
             // Claw Implementation //
 
             if (gamepad2.a) // This is for the Samanyu's claw to open
-                ClawServo.setPosition(1); // Extended
+                ClawServo.setPower(0.4); // Extended
 
             if (gamepad2.b) // This is for the Samanyu's claw to close
-                ClawServo.setPosition(0.5); // Closed
+                ClawServo.setPower(-0.4); // Closed
 
             RPServo.setPower(gamepad2.right_stick_y); // This is for the rack and pinion of Samanyu's claw
         }
-    }
-}
+    }}
 

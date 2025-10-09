@@ -7,50 +7,26 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
-
 @Disabled
 @Config
 @TeleOp
-public class clawTestSimple extends LinearOpMode{
+public class driveTesting extends LinearOpMode{
     private DcMotor FrontLeft;
     private DcMotor FrontRight;
     private DcMotor BackLeft;
     private DcMotor BackRight;
-
-    private DcMotor Arm;
-
-    private DcMotorSimple claw;
     @Override
     public void runOpMode() throws InterruptedException{
         FrontLeft=hardwareMap.get(DcMotor.class, "FrontLeft");
         FrontRight=hardwareMap.get(DcMotor.class, "FrontRight");
         BackLeft=hardwareMap.get(DcMotor.class, "BackLeft");
         BackRight=hardwareMap.get(DcMotor.class, "BackRight");
-        Arm=hardwareMap.get(DcMotor.class, "Arm");
-        claw=hardwareMap.get(DcMotorSimple.class, "claw");
-
-        Arm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-
         waitForStart();
         while(!isStopRequested()&& opModeIsActive()) {
             FrontLeft.setPower(gamepad1.left_stick_y);
             BackLeft.setPower(gamepad1.left_stick_y);
             FrontRight.setPower(-gamepad1.right_stick_y);
             BackRight.setPower(-gamepad1.right_stick_y);
-            if(gamepad1.dpad_left){
-                Arm.setPower(0.55);
-            }else if(gamepad1.dpad_right){
-                Arm.setPower(-0.55);
-            }else{
-                Arm.setPower(0);
-            }
-
-            if(gamepad1.a){
-                claw.setPower(-0.85);
-            }
-            if(gamepad1.b){
-                claw.setPower(0);
-            }
         }
     }
 }

@@ -20,7 +20,8 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
 import org.firstinspires.ftc.teamcode.RobotConstants;
 import org.firstinspires.ftc.teamcode.subsystems.Camera;
-
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
+@Disabled
 @Autonomous
 public class Auto5Sample extends NGAutoOpMode {
     Camera camera;
@@ -170,7 +171,7 @@ public class Auto5Sample extends NGAutoOpMode {
                 break;
             }
         }
-        rigging.disableServos();
+        //rigging.disableServos();
         camera.stopCamera();
         telemetry.addLine("Ready to go");
         telemetry.update();
@@ -251,7 +252,7 @@ public class Auto5Sample extends NGAutoOpMode {
                 new ParallelAction(
                         bulkRead.update(),
                         intake.updateAction(),
-                        trafficLight.updateAction(),
+                        //trafficLight.updateAction(),
                         new SequentialAction(
 //                                slideCollectSampleAndScore(firstSample, RobotConstants.claw_flat, true),
                                 new ParallelAction(

@@ -18,7 +18,6 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
 import org.firstinspires.ftc.teamcode.RobotConstants;
 import org.firstinspires.ftc.teamcode.subsystems.Distance;
-
 //@Config
 //@Autonomous
 public class Auto4SpecimenBroken extends NGAutoOpMode {
@@ -122,13 +121,13 @@ public class Auto4SpecimenBroken extends NGAutoOpMode {
                         )
                     ),
                     new InstantAction(() -> intake.moveWrist(RobotConstants.floor_pickup_position)),
-                    trafficLight.warnHuman(),
+                    //trafficLight.warnHuman(),
                     moveForwardAction1,
                     intake.grab(RobotConstants.claw_closed),
                     new InstantAction(() -> rear_distance.setOn(true)),
                     new ParallelAction(
                             scoreSecondSpecimen,
-                            trafficLight.disable(),
+                            //trafficLight.disable(),
                         intake.armAction(ARM_LIMIT),
                         new InstantAction(() ->intake.moveWrist(specimen_deliver ))
                     ),
@@ -140,13 +139,13 @@ public class Auto4SpecimenBroken extends NGAutoOpMode {
                                     intake.armAction(0)
                             )
                     ),
-                trafficLight.warnHuman(),
+                //trafficLight.warnHuman(),
                     moveForwardAction2,
                     intake.grab(RobotConstants.claw_closed),
                     new InstantAction(() -> rear_distance.setOn(true)),
                     new ParallelAction(
                             scoreThirdSpecimen,
-                            trafficLight.disable(),
+                            //trafficLight.disable(),
                             intake.armAction(ARM_LIMIT),
                             new InstantAction(() ->intake.moveWrist(specimen_deliver + 5))),
 
@@ -158,10 +157,10 @@ public class Auto4SpecimenBroken extends NGAutoOpMode {
                                     intake.armAction(0)
                             )
                     ),
-                    trafficLight.warnHuman(),
+                    //trafficLight.warnHuman(),
                     moveForwardAction3,
                     new InstantAction(() -> rear_distance.setOn(true)),
-                    new ParallelAction(scoreFourthSpecimen,trafficLight.disable(),
+                    new ParallelAction(scoreFourthSpecimen,
                             intake.armAction(ARM_LIMIT),
                          new InstantAction(() ->intake.moveWrist(specimen_deliver + 5))
                     ),
@@ -237,7 +236,7 @@ public class Auto4SpecimenBroken extends NGAutoOpMode {
         Actions.runBlocking(
                 new ParallelAction(
                         intake.updateAction(),
-                        trafficLight.updateAction(),
+                        //trafficLight.updateAction(),
                         rear_distance.updateAction(),
                         intake.distance.updateAction(),
                         auto
@@ -251,7 +250,7 @@ public class Auto4SpecimenBroken extends NGAutoOpMode {
     }
     public Action driveAndGrab(){
         return new SequentialAction(
-                drive.moveUsingDistance(intake.distance, RobotConstants.TARGET, RobotConstants.TOO_CLOSE, RobotConstants.TOO_FAR, 12),
+                //drive.moveUsingDistance(intake.distance, RobotConstants.TARGET, RobotConstants.TOO_CLOSE, RobotConstants.TOO_FAR, 12),
                 intake.grab(RobotConstants.claw_closed)
             );
     }

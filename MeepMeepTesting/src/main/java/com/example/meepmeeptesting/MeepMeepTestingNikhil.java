@@ -6,7 +6,9 @@ import com.acmerobotics.roadrunner.MinMax;
 import com.acmerobotics.roadrunner.NullAction;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.ProfileAccelConstraint;
+import com.acmerobotics.roadrunner.SleepAction;
 import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
+import com.acmerobotics.roadrunner.TrajectoryBuilder;
 import com.acmerobotics.roadrunner.TranslationalVelConstraint;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.VelConstraint;
@@ -18,8 +20,7 @@ import com.noahbres.meepmeep.roadrunner.entity.RoadRunnerBotEntity;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.Color;
-
-public class MeepMeepTesting {
+public class MeepMeepTestingNikhil {
     public static void main(String[] args) {
         MeepMeep meepMeep = new MeepMeep(800);
 
@@ -229,145 +230,72 @@ public class MeepMeepTesting {
                 return new MinMax(-30,80);
             }
         };
-        AccelConstraint pickSampleAccel = (robotPose, _path, _disp) -> {
+        AccelConstraint intakeAccel = (robotPose, _path, _disp) -> {
             if (robotPose.position.y.value() < -42.0) {
                 return new MinMax(-10,22);
             } else {
                 return new MinMax(-30,50);
             }
         };
-        VelConstraint highModeVel = (robotPose, _path, _disp) -> {
+        VelConstraint intakeVel = (robotPose, _path, _disp) -> {
             if (robotPose.position.y.value() < -25.0) {
                 return 20;
             } else {
                 return 50;
             }
         };
-
-
-
-        /*sampleBot.runAction(sampleBot.getDrive().actionBuilder(new Pose2d(-32.5, -64 , Math.toRadians(0)))
+       /* sampleBot.runAction(sampleBot.getDrive().actionBuilder(new Pose2d(64, -36 , Math.toRadians(-90)))
+                .lineToY(-5)
                 .setReversed(true)
-//                .afterTime(0.5, new InstantAction(() -> intake.moveWrist(RobotConstants.floor_pickup_position)))
-                .setTangent(Math.toRadians(90))
-//                .splineToConstantHeading(new Vector2d(-39, -60), Math.toRadians(135))
-                .splineToLinearHeading(basket, Math.toRadians(225), new TranslationalVelConstraint(24), new ProfileAccelConstraint(-10,40))
-                .setReversed(false)
-                .setTangent(Math.toRadians(45))
-
-                .splineToLinearHeading(new Pose2d(-48, -52.5, Math.toRadians(90)), Math.toRadians(0), new TranslationalVelConstraint(40), new ProfileAccelConstraint(-12,32))
-                .setReversed(true)
-
-                .setTangent(Math.PI + Math.atan2( -52.5 - basket.position.y,-48 - basket.position.x))
-
-                .splineToLinearHeading(basket, Math.toRadians(225), new TranslationalVelConstraint(36), new ProfileAccelConstraint(-10,40))
-                .setReversed(false)
-                .setTangent(Math.toRadians(135))
-                .splineToLinearHeading(new Pose2d(-59, -52.5, Math.toRadians(90)), Math.toRadians(90), new TranslationalVelConstraint(40),  new ProfileAccelConstraint(-12,32))
-                .setReversed(true)
-
-                .setTangent(Math.PI + Math.atan2( -52.5 - basket.position.y,-59 - basket.position.x))
-
-                .splineToLinearHeading(basket, Math.toRadians(225), new TranslationalVelConstraint(36), new ProfileAccelConstraint(-10,40))
-                .setReversed(false)
-                .setTangent(Math.toRadians(45))
-                .splineToLinearHeading(new Pose2d(-58, -47, Math.toRadians(118.5)), Math.toRadians(90), new TranslationalVelConstraint(40),  new ProfileAccelConstraint(-12,32))
-                .setReversed(true)
-                .setTangent(Math.toRadians(298.5))
-                .splineToLinearHeading(basket, Math.toRadians(225), new TranslationalVelConstraint(36), new ProfileAccelConstraint(-10,40))
-                .setReversed(true)
-                .setTangent(Math.toRadians(90))
-                .splineToSplineHeading(new Pose2d(-42, -45, Math.toRadians(0)), Math.toRadians(90))
-                .splineToLinearHeading(new Pose2d(-32, -12, Math.toRadians(0)), Math.toRadians(0), new TranslationalVelConstraint(80))
-                .setTangent(Math.toRadians(180))
-                .splineToLinearHeading(basket, Math.toRadians(225))
-                .setTangent(Math.toRadians(90))
-                .splineToLinearHeading(new Pose2d(-32, -12, Math.toRadians(0)), Math.toRadians(0), new TranslationalVelConstraint(50), new ProfileAccelConstraint(-15,50))
-
+                .setTangent(90)
+                .splineToSplineHeading(new Pose2d(-48, -24, Math.toRadians(0)), Math.toRadians(90))
+                .splineToSplineHeading(new Pose2d(-31, -11, Math.toRadians(0)), Math.toRadians(0))
+                .waitSeconds(1.2)
+                //.lineToX(-35)
+                .setTangent(-90)
+                .splineToSplineHeading(new Pose2d(-60, -48.5, Math.toRadians(70)), Math.toRadians(240))
+                        //.turn(-0.2)
+                .waitSeconds(0.5)
+                .splineToSplineHeading(new Pose2d(-31, -11, Math.toRadians(0)), Math.toRadians(0))
+                .waitSeconds(1.2)
+                //.lineToX(-35)
+                .setTangent(-90)
+                .splineToSplineHeading(new Pose2d(-60, -48.5, Math.toRadians(70)), Math.toRadians(240))
+                        //.turn(-0.2)
+                .waitSeconds(0.5)
+                .splineToSplineHeading(new Pose2d(-29, -11, Math.toRadians(0)), Math.toRadians(0))
                 .build());
-        sampleBot2.runAction(sampleBot.getDrive().actionBuilder(new Pose2d(-10, -66, Math.toRadians(270)))
-                .setTangent(Math.toRadians(90))
-                .splineToSplineHeading(new Pose2d(-2,-45, Math.toRadians(270)), Math.toRadians(90))
-                .splineToConstantHeading(new Vector2d(-2,-33), Math.toRadians(90))
-                .setReversed(false)
-                .setTangent(Math.toRadians(225))
-                .splineToLinearHeading(new Pose2d(-48,-52, Math.toRadians(90)), Math.toRadians(180), new TranslationalVelConstraint(50), new ProfileAccelConstraint(-10,50))
-
-                .splineToLinearHeading(basket, Math.toRadians(225   ), new TranslationalVelConstraint(36), new ProfileAccelConstraint(-10,40))
-                .setReversed(false)
-                .setTangent(Math.toRadians(135))
-                .splineToLinearHeading(new Pose2d(-59, -52.5, Math.toRadians(90)), Math.toRadians(90), new TranslationalVelConstraint(40),  new ProfileAccelConstraint(-12,32))
-                .setReversed(true)
-
-                .setTangent(Math.PI + Math.atan2( -52.5 - basket.position.y,-59 - basket.position.x))
-
-                .splineToLinearHeading(basket, Math.toRadians(225), new TranslationalVelConstraint(36), new ProfileAccelConstraint(-10,40))
-                .setReversed(false)
-                .setTangent(Math.toRadians(45))
-                .splineToLinearHeading(new Pose2d(-58, -47, Math.toRadians(118.5)), Math.toRadians(90), new TranslationalVelConstraint(40),  new ProfileAccelConstraint(-12,32))
-                .setReversed(true)
-                .setTangent(Math.toRadians(298.5))
-                .splineToLinearHeading(basket, Math.toRadians(225), new TranslationalVelConstraint(36), new ProfileAccelConstraint(-10,40))
-                .setReversed(true)
-                .setTangent(Math.toRadians(90))
-                .splineToLinearHeading(new Pose2d(-32, -12, Math.toRadians(0)), Math.toRadians(0), new TranslationalVelConstraint(80))
-
+            */
+        sampleBot.runAction(sampleBot.getDrive().actionBuilder(new Pose2d(-56, -44 , Math.toRadians(55)))
+                .lineToY(-36)
+                    .waitSeconds(4.5)
+                .splineToLinearHeading(new Pose2d(-13, -30, Math.toRadians(90)), Math.toRadians(-30))
+                       // .waitSeconds(0.00001)
+                .lineToYConstantHeading(-52, new TranslationalVelConstraint(10))
+                .strafeToSplineHeading(new Vector2d(-54, -36), Math.toRadians(55))
+                    .waitSeconds(4.5)
+                //.splineToSplineHeading(new Pose2d(11, -30, Math.toRadians(0)), Math.toRadians(0))
+                //    .waitSeconds(0.1)
+                //.strafeToSplineHeading(new Vector2d(-52, -34), Math.toRadians(65))
                 .build());
-        Pose2d firstSample = new Pose2d(31, -34, Math.toRadians(30));
-        Pose2d secondSample = new Pose2d(41, -34, Math.toRadians(30));
-        Pose2d thirdSample = new Pose2d(48, -34, Math.toRadians(30));
-        Pose2d pickupPosition = new Pose2d(40, -63,  Math.toRadians(270));
+        /*sampleBot.runAction(sampleBot.getDrive().actionBuilder(new Pose2d(61, -9, Math.toRadians(0)))
+                .splineToSplineHeading(new Pose2d(-50, -36, Math.toRadians(55)), Math.toRadians(-40), new TranslationalVelConstraint(80))
+                    .waitSeconds(4)
+                .splineToLinearHeading(new Pose2d(-13, -30, Math.toRadians(90)), Math.toRadians(-50), new TranslationalVelConstraint(60))
+                    //.waitSeconds(0.2)
+                .lineToY(-53, new TranslationalVelConstraint(15))
+                .strafeToSplineHeading(new Vector2d(-50, -36), Math.toRadians(55), new TranslationalVelConstraint(80))
+                        .waitSeconds(4)
 
-        specimenBot.runAction(specimenBot.getDrive().actionBuilder(new Pose2d(10, -64 , Math.toRadians(0)))
-                        .setTangent(Math.toRadians(90))
-                .splineToSplineHeading(new Pose2d(4,-45, Math.toRadians(270)), Math.toRadians(90))
+                .splineToLinearHeading(new Pose2d(10, -30, Math.toRadians(90)), Math.toRadians(-20), new TranslationalVelConstraint(60))
+                        .lineToY(-53, new TranslationalVelConstraint(15))
+                .strafeToSplineHeading(new Vector2d(-50, -36), Math.toRadians(55), new TranslationalVelConstraint(80))
+                .build());*/
 
-                .splineToConstantHeading(new Vector2d(4,-34), Math.toRadians(90), null, smartScore)
-                .setTangent(Math.toRadians(-45))
-                .splineToLinearHeading(firstSample, Math.toRadians(30), new TranslationalVelConstraint(20), new ProfileAccelConstraint(-15, 35))
-                .setTangent(Math.toRadians(-30))
-                .splineToLinearHeading(new Pose2d(firstSample.position.x, -37, Math.toRadians(-45)), Math.toRadians(0), new TranslationalVelConstraint(20), new ProfileAccelConstraint(-10, 25))
-
-                .setTangent(Math.toRadians(-45))
-                .splineToLinearHeading(secondSample, Math.toRadians(30), new TranslationalVelConstraint(20), new ProfileAccelConstraint(-15, 35))
-                .setTangent(Math.toRadians(-30))
-                .splineToLinearHeading(pickupPosition,Math.toRadians(270),new TranslationalVelConstraint(20), new ProfileAccelConstraint(-8, 25))
-                        .setTangent(Math.toRadians(170))
-//                        .splineToConstantHeading(new Vector2d(20,-56),Math.toRadians(90))
-                .splineToConstantHeading(new Vector2d(6, -34), Math.toRadians(90))
-                .setTangent(Math.toRadians(270))
-                .splineToConstantHeading(new Vector2d(40, -63), Math.toRadians(0))
-
-                .setTangent(Math.toRadians(180))
-
-                .splineToConstantHeading(new Vector2d(8, -34), Math.toRadians(90))
-                .setTangent(Math.toRadians(270))
-
-                .splineToConstantHeading(new Vector2d(40, -63), Math.toRadians(0))
-                .setTangent(Math.toRadians(180))
-
-                .splineToConstantHeading(new Vector2d(10, -34), Math.toRadians(90))
-                .setTangent(Math.toRadians(270))
-
-                .splineToConstantHeading(new Vector2d(40, -63), Math.toRadians(0))
-                .setTangent(Math.toRadians(180))
-
-                .splineToConstantHeading(new Vector2d(12, -34), Math.toRadians(90))
-                .setTangent(Math.toRadians(270))
-
-                .splineToConstantHeading(new Vector2d(40, -63), Math.toRadians(0))
-
-                .build());
-
-        meepMeep.setBackground(MeepMeep.Background.FIELD_INTO_THE_DEEP_OFFICIAL )
+        meepMeep.setBackground(MeepMeep.Background.FIELD_DECODE_OFFICIAL)
                 .setDarkMode(true)
                 .setBackgroundAlpha(0.95f)
                 .addEntity(sampleBot)
-                .addEntity(sampleBot2)
-                .addEntity(specimenBot)
                 .start();
-    */
     }
-
-
 }

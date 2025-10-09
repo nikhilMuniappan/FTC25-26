@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.roadrunner;
+/*package org.firstinspires.ftc.teamcode.roadrunner;
 
 import static com.acmerobotics.roadrunner.Curves.project;
 import static org.firstinspires.ftc.teamcode.subsystems.MecaTank.MAX_ACCEL;
@@ -50,7 +50,6 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
-import org.firstinspires.ftc.teamcode.DECODERobotConstants;
 import org.firstinspires.ftc.teamcode.RobotConstants;
 import org.firstinspires.ftc.teamcode.library.Control;
 import org.firstinspires.ftc.teamcode.roadrunner.messages.DriveCommandMessage;
@@ -71,18 +70,18 @@ public final class MecanumDrive {
     public static class Params {
         // IMU orientation
        public RevHubOrientationOnRobot.LogoFacingDirection logoFacingDirection =
-                RevHubOrientationOnRobot.LogoFacingDirection.RIGHT;
+                RevHubOrientationOnRobot.LogoFacingDirection.LEFT;
         public RevHubOrientationOnRobot.UsbFacingDirection usbFacingDirection =
                 RevHubOrientationOnRobot.UsbFacingDirection.UP;
 
         // drive model parameters
-        public double inPerTick = 2.9551586791725556e-3;
-        public double lateralInPerTick = 0.002341721298956517;
-        public double trackWidthTicks = 3885.9426010847674;
+        public double inPerTick = 5.4831668225294210238794085239951e-4;
+        public double lateralInPerTick = 0.00040551511214546605;
+        public double trackWidthTicks = 22915.48313310018;
 
         // feedforward parameters (in tick units)
-        public double kS = 0.5428641788140034;
-        public double kV = 0.00057648335599190432;
+        public double kS = 0.8944224112840558;
+        public double kV = 0.0001063045912406822;
         public double kA = 0.00002;
 
         // path profile parameters (in inches)
@@ -187,9 +186,9 @@ public final class MecanumDrive {
             imu = lazyImu.get();
 
             // TODO: reverse encoders if needed
-
+            //   leftFront.setDirection(DcMotorSimple.Direction.REVERSE);
         }
-
+        
 
         @Override
         public Twist2dDual<Time> update() {
@@ -275,10 +274,10 @@ public final class MecanumDrive {
         }
 
 
-        frontLeft = hardwareMap.get(DcMotorEx.class, DECODERobotConstants.fl);
-        backLeft = hardwareMap.get(DcMotorEx.class, DECODERobotConstants.bl);
-        backRight = hardwareMap.get(DcMotorEx.class, DECODERobotConstants.br);
-        frontRight = hardwareMap.get(DcMotorEx.class, DECODERobotConstants.fr);
+        frontLeft = hardwareMap.get(DcMotorEx.class, RobotConstants.fl);
+        backLeft = hardwareMap.get(DcMotorEx.class, RobotConstants.bl);
+        backRight = hardwareMap.get(DcMotorEx.class, RobotConstants.br);
+        frontRight = hardwareMap.get(DcMotorEx.class, RobotConstants.fr);
 
         frontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -287,14 +286,14 @@ public final class MecanumDrive {
 
         frontRight.setDirection(DcMotorSimple.Direction.REVERSE);
         backRight.setDirection(DcMotorSimple.Direction.REVERSE);
-        frontLeft.setDirection(DcMotorSimple.Direction.FORWARD);
+        frontLeft.setDirection(DcMotorSimple.Direction.REVERSE);
         backLeft.setDirection(DcMotorSimple.Direction.FORWARD);
 
 
         lazyImu = new LazyImu(hardwareMap, "imu", new RevHubOrientationOnRobot(
                 PARAMS.logoFacingDirection, PARAMS.usbFacingDirection));
-        DECODERobotConstants.imu = lazyImu;
-        DECODERobotConstants.imu_init = true;
+        RobotConstants.imu = lazyImu;
+        RobotConstants.imu_init = true;
 
         voltageSensor = hardwareMap.voltageSensor.iterator().next();
 
@@ -947,7 +946,7 @@ public final class MecanumDrive {
     public PoseVelocity2d updatePoseEstimate() {
         Twist2dDual<Time> twist = localizer.update();
         pose = pose.plus(twist.value());
-        DECODERobotConstants.pose = pose;
+        RobotConstants.pose = pose;
         poseHistory.add(pose);
         while (poseHistory.size() > 100) {
             poseHistory.removeFirst();
@@ -1021,3 +1020,4 @@ public final class MecanumDrive {
         );
     }
 }
+*/

@@ -104,7 +104,7 @@ public class RRPathTest extends TestingOpMode {
                                     firstSample,
                                     intake.armAction(0)
                             ),
-                            drive.moveUsingDistance(intake.distance, 4, 1.25, 4.5),
+                            //drive.moveUsingDistance(intake.distance, 4, 1.25, 4.5),
                             intake.grab(),
                             new ParallelAction(
                                     intake.raiseArm(),
@@ -116,7 +116,7 @@ public class RRPathTest extends TestingOpMode {
                                     intake.armAction(0),
                                     secondSample
                             ),
-                            drive.moveUsingDistance(intake.distance, 4, 1.25, 4.5),
+                            //drive.moveUsingDistance(intake.distance, 4, 1.25, 4.5),
                             intake.grab(),
                             new ParallelAction(
                                 intake.raiseArm(),
@@ -126,7 +126,7 @@ public class RRPathTest extends TestingOpMode {
                             new InstantAction(() -> intake.moveClaw(0.7)),
                             intake.armAction(0,800),
                             new ParallelAction(thirdSample, intake.armAction(0), intake.slideAction(0)),
-                            drive.moveUsingDistance(intake.distance, 3.5, 2.3,4.5),
+                            //drive.moveUsingDistance(intake.distance, 3.5, 2.3,4.5),
                             new InstantAction(() -> intake.moveWrist(RobotConstants.floor_pickup_position)),
                             new SleepAction(0.3),
                             intake.grab(0.9),

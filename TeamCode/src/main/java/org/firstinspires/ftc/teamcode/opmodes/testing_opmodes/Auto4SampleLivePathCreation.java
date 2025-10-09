@@ -194,8 +194,8 @@ public class Auto4SampleLivePathCreation extends NGAutoOpMode {
     public FailoverAction updateAction(){
         return new FailoverAction(new ParallelAction(
                 intake.distance.updateAction(),
-                intake.updateAction(),
-                trafficLight.updateAction()
+                intake.updateAction()
+                //trafficLight.updateAction()
         ),
                 new NullAction()
         );

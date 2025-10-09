@@ -101,7 +101,7 @@ public class Auto1Specimen extends NGAutoOpMode {
         Actions.runBlocking(
                 new ParallelAction(
                         intake.updateAction(),
-                        trafficLight.updateAction(),
+                        //trafficLight.updateAction(),
                         new SequentialAction(
                                 scoreSpecimenSampleSide(scoreSpecimen),
 //                                new ParallelAction(

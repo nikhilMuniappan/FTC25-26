@@ -200,7 +200,7 @@ public class Auto3Specimen extends NGAutoOpMode {
         Actions.runBlocking(
                 new ParallelAction(
                         intake.updateAction(),
-                        trafficLight.updateAction(),
+                        //trafficLight.updateAction(),
                         rear_distance.updateAction(),
                         intake.distance.updateAction(),
                         auto
@@ -214,7 +214,7 @@ public class Auto3Specimen extends NGAutoOpMode {
     }
     public Action driveAndGrab(){
         return new SequentialAction(
-                drive.moveUsingDistance(intake.distance, RobotConstants.TARGET, RobotConstants.TOO_CLOSE, RobotConstants.TOO_FAR, 12),
+                //drive.moveUsingDistance(intake.distance, RobotConstants.TARGET, RobotConstants.TOO_CLOSE, RobotConstants.TOO_FAR, 12),
                 intake.grab(RobotConstants.claw_closed)
             );
     }

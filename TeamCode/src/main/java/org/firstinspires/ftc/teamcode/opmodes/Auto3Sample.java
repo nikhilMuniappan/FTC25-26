@@ -88,7 +88,7 @@ public class Auto3Sample extends NGAutoOpMode {
         Actions.runBlocking(
                 new ParallelAction(
                         intake.updateAction(),
-                        trafficLight.updateAction(),
+                        //trafficLight.updateAction(),
                         new SequentialAction(
                                 new ParallelAction(
                                         scoreSpecimen,

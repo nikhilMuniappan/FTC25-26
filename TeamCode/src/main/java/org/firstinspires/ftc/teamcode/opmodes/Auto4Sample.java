@@ -17,9 +17,9 @@ import com.acmerobotics.roadrunner.TranslationalVelConstraint;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-
 import org.firstinspires.ftc.teamcode.RobotConstants;
-
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
+@Disabled
 @Autonomous
 public class Auto4Sample extends NGAutoOpMode {
     @Override
@@ -216,7 +216,7 @@ public class Auto4Sample extends NGAutoOpMode {
                 new ParallelAction(
                         bulkRead.update(),
                         intake.updateAction(),
-                        trafficLight.updateAction(),
+                        //trafficLight.updateAction(),
                         new SequentialAction(
                                 new ParallelAction(
                                         firstSample,

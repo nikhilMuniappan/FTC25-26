@@ -21,6 +21,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AngularVelocity;
 import org.firstinspires.ftc.robotcore.external.navigation.UnnormalizedAngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
+import org.firstinspires.ftc.teamcode.DECODERobotConstants;
 import org.firstinspires.ftc.teamcode.RobotConstants;
 import org.firstinspires.ftc.teamcode.roadrunner.Localizer;
 import org.firstinspires.ftc.teamcode.roadrunner.messages.TwoDeadWheelInputsMessage;
@@ -29,7 +30,7 @@ import org.firstinspires.ftc.teamcode.roadrunner.messages.TwoDeadWheelInputsMess
 public final class TwoDeadWheelLocalizer implements Localizer {
     public static class Params {
         public double parYTicks = 4071.7792356544105; // y position of the parallel encoder (in tick units)
-        public double perpXTicks = 5853.168351644321; // x position of the perpendicular encoder (in tick units)
+        public double perpXTicks = 1547.5441082634234; // x position of the perpendicular encoder (in tick units)
     }
 
     public static Params PARAMS = new Params();
@@ -48,10 +49,10 @@ public final class TwoDeadWheelLocalizer implements Localizer {
     public TwoDeadWheelLocalizer(HardwareMap hardwareMap, IMU imu, double inPerTick) {
 
 
-        par = new OverflowEncoder(new RawEncoder(hardwareMap.get(DcMotorEx.class, RobotConstants.bl)));
+        par = new OverflowEncoder(new RawEncoder(hardwareMap.get(DcMotorEx.class, DECODERobotConstants.bl)));
         perp = new OverflowEncoder(new RawEncoder(hardwareMap.get(DcMotorEx.class, RobotConstants.fr)));
 
-
+        perp.setDirection(DcMotorSimple.Direction.REVERSE);
 
         this.imu = imu;
 

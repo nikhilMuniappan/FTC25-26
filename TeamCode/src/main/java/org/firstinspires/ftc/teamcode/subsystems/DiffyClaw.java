@@ -7,6 +7,7 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.RobotConstants;
 import org.firstinspires.ftc.teamcode.library.NGServo;
 import org.firstinspires.ftc.teamcode.library.Subsystem;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 @Config
 public class DiffyClaw extends Subsystem {
     public double wrist_angle = 0;
