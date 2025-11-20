@@ -12,11 +12,13 @@ import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.VelConstraint;
 import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 
 import org.firstinspires.ftc.teamcode.opmodes.NGAutoOpMode;
 
+@Disabled
 @Autonomous
-public class FarSide9ArtifactAuto extends NGAutoOpMode {
+public class RedFarSide_9ArtifactAuto extends NGAutoOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
 
@@ -54,17 +56,17 @@ public class FarSide9ArtifactAuto extends NGAutoOpMode {
         };
 
         TrajectoryActionBuilder moveToGoalPath = drive.actionBuilder(beginPose)
-                .splineToSplineHeading(new Pose2d(-50, -36, Math.toRadians(55)), Math.toRadians(-40), new TranslationalVelConstraint(80));
+                .splineToSplineHeading(new Pose2d(-50, 36, Math.toRadians(-55)), Math.toRadians(10), new TranslationalVelConstraint(80));
         TrajectoryActionBuilder PathToFirstSet = moveToGoalPath.endTrajectory().fresh()
-                .splineToLinearHeading(new Pose2d(-13, -30, Math.toRadians(90)), Math.toRadians(-50), new TranslationalVelConstraint(60));
-        TrajectoryActionBuilder collectFirstSet = drive.actionBuilder(new Pose2d(-13, -30, Math.toRadians(90)))
-                .lineToY(-53, new TranslationalVelConstraint(15));
+                .splineToLinearHeading(new Pose2d(-13, 30, Math.toRadians(-90)), Math.toRadians(40), new TranslationalVelConstraint(60));
+        TrajectoryActionBuilder collectFirstSet = drive.actionBuilder(new Pose2d(-13, 30, Math.toRadians(-90)))
+                .lineToY(53, new TranslationalVelConstraint(15));
         TrajectoryActionBuilder PathToGoal = PathToFirstSet.endTrajectory().fresh()
-                .strafeToSplineHeading(new Vector2d(-50, -36), Math.toRadians(55), new TranslationalVelConstraint(80));
+                .strafeToSplineHeading(new Vector2d(-50, 36), Math.toRadians(-55), new TranslationalVelConstraint(80));
         TrajectoryActionBuilder PathToSecondSet = PathToGoal.endTrajectory().fresh()
-                .splineToLinearHeading(new Pose2d(10, -30, Math.toRadians(90)), Math.toRadians(-20), new TranslationalVelConstraint(60));
-        TrajectoryActionBuilder collectSecondSet = drive.actionBuilder(new Pose2d(10, -30, Math.toRadians(90)))
-                .lineToY(-53, new TranslationalVelConstraint(15));
+                .splineToLinearHeading(new Pose2d(10, 30, Math.toRadians(-90)), Math.toRadians(20), new TranslationalVelConstraint(60));
+        TrajectoryActionBuilder collectSecondSet = drive.actionBuilder(new Pose2d(10, 30, Math.toRadians(-90)))
+                .lineToY(53, new TranslationalVelConstraint(15));
 
         telemetry.addLine("Ready To Start");
         telemetry.update();

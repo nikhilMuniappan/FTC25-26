@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.opmodes;
 
 import static org.firstinspires.ftc.teamcode.RobotConstants.ARM_LIMIT;
+import static org.firstinspires.ftc.teamcode.subsystems.Intake2_0.hoodAdjuster;
 
 import androidx.annotation.NonNull;
 
@@ -22,6 +23,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.teamcode.DECODERobotConstants;
 import org.firstinspires.ftc.teamcode.RobotConstants;
 import org.firstinspires.ftc.teamcode.library.BulkRead;
 import org.firstinspires.ftc.teamcode.roadrunner.MecanumDrive;
@@ -53,6 +55,8 @@ public abstract class NGAutoOpMode extends LinearOpMode {
         //drive.mountTrafficLight(trafficLight);
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
         intake2_0 = new Intake2_0(hardwareMap, telemetry, timer);
+        hoodAdjuster.setPosition(DECODERobotConstants.hoodStartPos);
+        Intake2_0.initHood();
         //RobotConstants.auto_transfer = true;
         //vihasCameraArm = new VihasCameraArm(hardwareMap, telemetry);
         //intake = new Intake(hardwareMap, telemetry, timer, trafficLight);

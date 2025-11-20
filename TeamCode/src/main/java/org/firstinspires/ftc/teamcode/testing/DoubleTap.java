@@ -58,5 +58,4 @@ public class DoubleTap extends TestingOpMode {
             telemetry.update();
         }
     }
-
 }

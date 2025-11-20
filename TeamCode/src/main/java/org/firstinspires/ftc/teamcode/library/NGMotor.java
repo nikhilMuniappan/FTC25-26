@@ -3,12 +3,15 @@ package org.firstinspires.ftc.teamcode.library;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 
 import java.util.concurrent.TimeUnit;
+import com.qualcomm.robotcore.hardware.MotorControlAlgorithm;
+import com.qualcomm.robotcore.util.Range;
 
 public class NGMotor extends Subsystem {
     DcMotorEx pid_motor;
@@ -64,6 +67,12 @@ public class NGMotor extends Subsystem {
 
     private double caching_tolerance = 0.005;
     private double cached_power = Double.NaN;
+    public double targetVelocity = 0.0; //flywheel target velocity
+    private double kP, kI, kD, kF;      //PIDF for flywheels
+
+    private double flywheelIntegralSum = 0;
+    private double flywheelLastError = 0;
+    private ElapsedTime pidTimer = new ElapsedTime();
 
     Telemetry telemetry;
 
@@ -80,13 +89,52 @@ public class NGMotor extends Subsystem {
         timer = new ElapsedTime();
 
     }
+    public void setCustomVelocityPID(double targetVel, double P, double I, double D, double F) {
+        this.targetVelocity = targetVel;
+        this.kP = P;
+        this.kI = I;
+        this.kD = D;
+        this.kF = F;
+
+        this.flywheelIntegralSum = 0;
+        this.flywheelLastError = 0;
+        this.pidTimer.reset();
+    }
+    public void updateFlywheels() {
+        double currentVelocity = pid_motor.getVelocity();
+        double loopTime = pidTimer.seconds();
+        pidTimer.reset();
+
+        double error = targetVelocity - currentVelocity;
+
+        double P_Term = kP * error;
+
+        flywheelIntegralSum += error * loopTime;
+        if (flywheelIntegralSum > 1.0) flywheelIntegralSum = 1.0;
+        if (flywheelIntegralSum < -1.0) flywheelIntegralSum = -1.0;
+        double I_Term = kI * integralSum;
+
+        double derivative = (loopTime > 0) ? (error - flywheelLastError) / loopTime : 0;
+        flywheelLastError = error;
+        double D_Term = kD * derivative;
+
+        double F_Term = kF * targetVelocity;
+
+        double finalPower = P_Term + I_Term + D_Term + F_Term;
+
+        finalPower = Range.clip(finalPower, -1.0, 1.0);
+        pid_motor.setPower(finalPower);
+
+        telemetry.addData("P/I/D/F Terms", "P: %.3f, I: %.3f, D: %.3f, F: %.3f", P_Term, I_Term, D_Term, F_Term);
+        telemetry.addData("Final Power", finalPower);
+    }
+
     public void addPower(double power){
         compensation_power = power;
     }
 
     public void setPowerDamp(boolean on){
         power_damp = on;
-
     }
     public void setExitWithTime(boolean on){
         exit_with_time = on;
@@ -170,9 +218,9 @@ public class NGMotor extends Subsystem {
     }
     @Override
     public void init(){
-        setPower(0);
         pid_motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         pid_motor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        pid_motor.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
     }
     public double getCurrent(){
         return pid_motor.getCurrent(CurrentUnit.MILLIAMPS);
@@ -182,6 +230,9 @@ public class NGMotor extends Subsystem {
     }
     public double getVelocity(){
         return pid_motor.getVelocity();
+    }
+    public void setVelocity(double vel){
+        pid_motor.setVelocity(vel);
     }
     @Override
     public void telemetry(){
@@ -248,6 +299,13 @@ public class NGMotor extends Subsystem {
 
         }
     }
+    public void setZeroPowerBehavior_Brake(){
+        pid_motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+    }
+    public void setZeroPowerBehavior_Float(){
+        pid_motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+    }
+
     public void setPower(double power) {
         if(exceedingConstraints(power)) {
             power = 0;

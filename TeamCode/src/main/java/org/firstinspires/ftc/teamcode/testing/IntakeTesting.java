@@ -71,7 +71,7 @@ public class IntakeTesting extends TestingOpMode {
         timer = new ElapsedTime();
         intake = new Intake(hardwareMap, telemetry, timer, trafficLight);
         intake.init();
-        mecaTank = new MecaTank(hardwareMap, telemetry, timer, trafficLight);
+        //mecaTank = new MecaTank(hardwareMap, telemetry, timer, trafficLight);
 
         mecaTank.init();
 

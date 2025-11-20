@@ -34,6 +34,7 @@ public class obeliskTesting extends LinearOpMode {
             String motif = CAM.getMotif();
             telemetry.addData("Motif", motif);
             telemetry.update();
+            CAM.getGoalTagData();
         }
 
         CAM.stop();

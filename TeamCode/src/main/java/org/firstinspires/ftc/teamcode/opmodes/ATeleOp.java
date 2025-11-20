@@ -121,7 +121,7 @@ public class ATeleOp extends LinearOpMode {
 
         trafficLight = new TrafficLight("Traffic Light", hardwareMap, telemetry, RobotConstants.red_led, RobotConstants.green_led);
         intake = new Intake(hardwareMap, telemetry, timer, trafficLight);
-        mecaTank = new MecaTank(hardwareMap, telemetry, timer, trafficLight);
+        //mecaTank = new MecaTank(hardwareMap, telemetry, timer, trafficLight);
         vihasCameraArm = new VihasCameraArm(hardwareMap, telemetry, timer);
         rigging = new Rigging(hardwareMap, telemetry, timer);
 
@@ -197,7 +197,6 @@ public class ATeleOp extends LinearOpMode {
                 intake.resetSpecimenHeight();
                 intake.moveArm(0);
             }
-
 
             right_bumper2 = currentGamepad2.right_bumper && !previousGamepad2.right_bumper;
             multiClick.update("right_bumper", getRuntime(), right_bumper2);

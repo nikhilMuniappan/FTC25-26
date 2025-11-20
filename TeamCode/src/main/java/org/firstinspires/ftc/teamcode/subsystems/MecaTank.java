@@ -14,6 +14,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.teamcode.DECODERobotConstants;
 import org.firstinspires.ftc.teamcode.RobotConstants;
 import org.firstinspires.ftc.teamcode.library.Control;
 import org.firstinspires.ftc.teamcode.library.NGMotor;
@@ -75,21 +76,21 @@ public class MecaTank extends Subsystem {
 
     private ElapsedTime timer;
     public MecaTank(HardwareMap hardwareMap, Telemetry telemetry){
-        frontLeft = new NGMotor(hardwareMap, telemetry, RobotConstants.fl);
-        frontRight = new NGMotor(hardwareMap, telemetry, RobotConstants.fr);
-        backLeft = new NGMotor(hardwareMap, telemetry, RobotConstants.bl);
-        backRight = new NGMotor(hardwareMap, telemetry, RobotConstants.br);
+        frontLeft = new NGMotor(hardwareMap, telemetry, DECODERobotConstants.fl);
+        frontRight = new NGMotor(hardwareMap, telemetry, DECODERobotConstants.fr);
+        backLeft = new NGMotor(hardwareMap, telemetry, DECODERobotConstants.bl);
+        backRight = new NGMotor(hardwareMap, telemetry, DECODERobotConstants.br);
 
-        distance = new Distance(hardwareMap, telemetry, RobotConstants.distance);
+        //distance = new Distance(hardwareMap, telemetry, RobotConstants.distance);
 //        rear_distance = new Distance(hardwareMap, telemetry, RobotConstants.rear_distance);
         imu = new LazyImu(hardwareMap, "imu", new RevHubOrientationOnRobot(
                 PARAMS.logoFacingDirection, PARAMS.usbFacingDirection));
-        trafficLight = new TrafficLight("Traffic Light", hardwareMap, telemetry, RobotConstants.red_led, RobotConstants.green_led);
+        //trafficLight = new TrafficLight("Traffic Light", hardwareMap, telemetry, RobotConstants.red_led, RobotConstants.green_led);
 
-        backRight.setDirection(DcMotor.Direction.REVERSE);
-        frontRight.setDirection(DcMotor.Direction.REVERSE);
-        backLeft.setDirection(DcMotor.Direction.FORWARD);
-        frontLeft.setDirection(DcMotor.Direction.FORWARD);
+        backRight.setDirection(DcMotor.Direction.FORWARD);
+        frontRight.setDirection(DcMotor.Direction.FORWARD);
+        backLeft.setDirection(DcMotor.Direction.REVERSE);
+        frontLeft.setDirection(DcMotor.Direction.REVERSE);
 
         timer = new ElapsedTime();
         this.telemetry = telemetry;
@@ -99,11 +100,9 @@ public class MecaTank extends Subsystem {
         return front_distance;
     }
 
-    public MecaTank(HardwareMap hardwareMap, Telemetry telemetry, ElapsedTime timer, TrafficLight trafficLight){
+    public MecaTank(HardwareMap hardwareMap, Telemetry telemetry, ElapsedTime timer){
         this(hardwareMap, telemetry);
         this.timer = timer;
-        this.trafficLight = trafficLight;
-
     }
     public void setDistanceType(boolean front){
         this.front_distance = front;

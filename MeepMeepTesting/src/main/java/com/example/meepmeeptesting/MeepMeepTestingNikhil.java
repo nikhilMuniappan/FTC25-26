@@ -244,7 +244,7 @@ public class MeepMeepTestingNikhil {
                 return 50;
             }
         };
-       /* sampleBot.runAction(sampleBot.getDrive().actionBuilder(new Pose2d(64, -36 , Math.toRadians(-90)))
+        /*sampleBot.runAction(sampleBot.getDrive().actionBuilder(new Pose2d(64, -36 , Math.toRadians(-90)))
                 .lineToY(-5)
                 .setReversed(true)
                 .setTangent(90)
@@ -265,32 +265,38 @@ public class MeepMeepTestingNikhil {
                 .waitSeconds(0.5)
                 .splineToSplineHeading(new Pose2d(-29, -11, Math.toRadians(0)), Math.toRadians(0))
                 .build());
-            */
-        sampleBot.runAction(sampleBot.getDrive().actionBuilder(new Pose2d(-56, -44 , Math.toRadians(55)))
-                .lineToY(-36)
-                    .waitSeconds(4.5)
-                .splineToLinearHeading(new Pose2d(-13, -30, Math.toRadians(90)), Math.toRadians(-30))
+         */
+        /*sampleBot.runAction(sampleBot.getDrive().actionBuilder(new Pose2d(-56, -44 , Math.toRadians(55)))
+                .lineToY(36)
+                    .waitSeconds(4)
+                .splineToLinearHeading(new Pose2d(-13, 30, Math.toRadians(-90)), Math.toRadians(10))
                        // .waitSeconds(0.00001)
-                .lineToYConstantHeading(-52, new TranslationalVelConstraint(10))
-                .strafeToSplineHeading(new Vector2d(-54, -36), Math.toRadians(55))
-                    .waitSeconds(4.5)
+                .lineToYConstantHeading(52, new TranslationalVelConstraint(15))
+                .strafeToSplineHeading(new Vector2d(-50, 36), Math.toRadians(-55))
+                        .waitSeconds(4)
+                .splineToLinearHeading(new Pose2d(10, 30, Math.toRadians(-90)), Math.toRadians(5), new TranslationalVelConstraint(60))
                 //.splineToSplineHeading(new Pose2d(11, -30, Math.toRadians(0)), Math.toRadians(0))
                 //    .waitSeconds(0.1)
                 //.strafeToSplineHeading(new Vector2d(-52, -34), Math.toRadians(65))
-                .build());
-        /*sampleBot.runAction(sampleBot.getDrive().actionBuilder(new Pose2d(61, -9, Math.toRadians(0)))
-                .splineToSplineHeading(new Pose2d(-50, -36, Math.toRadians(55)), Math.toRadians(-40), new TranslationalVelConstraint(80))
+                .build());*/
+        /*sampleBot.runAction(sampleBot.getDrive().actionBuilder(new Pose2d(61, 9, Math.toRadians(0)))
+                .splineToSplineHeading(new Pose2d(-50, 36, Math.toRadians(-55)), Math.toRadians(50), new TranslationalVelConstraint(80))
                     .waitSeconds(4)
-                .splineToLinearHeading(new Pose2d(-13, -30, Math.toRadians(90)), Math.toRadians(-50), new TranslationalVelConstraint(60))
+                .splineToLinearHeading(new Pose2d(-13, 30, Math.toRadians(-90)), Math.toRadians(40), new TranslationalVelConstraint(60))
                     //.waitSeconds(0.2)
-                .lineToY(-53, new TranslationalVelConstraint(15))
-                .strafeToSplineHeading(new Vector2d(-50, -36), Math.toRadians(55), new TranslationalVelConstraint(80))
+                .lineToY(53, new TranslationalVelConstraint(15))
+                .strafeToSplineHeading(new Vector2d(-50, 36), Math.toRadians(-55), new TranslationalVelConstraint(80))
                         .waitSeconds(4)
 
                 .splineToLinearHeading(new Pose2d(10, -30, Math.toRadians(90)), Math.toRadians(-20), new TranslationalVelConstraint(60))
                         .lineToY(-53, new TranslationalVelConstraint(15))
                 .strafeToSplineHeading(new Vector2d(-50, -36), Math.toRadians(55), new TranslationalVelConstraint(80))
-                .build());*/
+                .build())
+*/
+        sampleBot.runAction(sampleBot.getDrive().actionBuilder(new Pose2d(-52, -48 , Math.toRadians(55)))
+                //.strafeToSplineHeading(new Vector2d(-22, -5), Math.toRadians(55), new TranslationalVelConstraint(50))
+                .lineToY(-22, new TranslationalVelConstraint(60))
+                .build());
 
         meepMeep.setBackground(MeepMeep.Background.FIELD_DECODE_OFFICIAL)
                 .setDarkMode(true)

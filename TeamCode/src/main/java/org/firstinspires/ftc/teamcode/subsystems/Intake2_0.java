@@ -13,9 +13,11 @@ import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.SleepAction;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
@@ -32,6 +34,8 @@ public class Intake2_0 {
     ElapsedTime timer;
     public NGMotor rollers;
     public NGMotor flywheels;
+    public static Servo hoodAdjuster;
+    public NGMotor transferRollers;
 
     public Intake2_0(HardwareMap hardwareMap, Telemetry telemetry){
         this.hardwareMap = hardwareMap;
@@ -39,6 +43,12 @@ public class Intake2_0 {
         timer = new ElapsedTime();
         rollers = new NGMotor(hardwareMap, telemetry, DECODERobotConstants.rollers);
         flywheels = new NGMotor(hardwareMap, telemetry, DECODERobotConstants.flywheels);
+        transferRollers = new NGMotor(hardwareMap, telemetry, DECODERobotConstants.transferRollers);
+        flywheels.init();
+        flywheels.setZeroPowerBehavior_Brake();
+        transferRollers.setDirection(DcMotor.Direction.REVERSE);
+        //flywheels.setFlywheelPIDF(0.0002, 0, 0, 0.0006);
+        hoodAdjuster = hardwareMap.get(Servo.class, DECODERobotConstants.hoodAdjuster);
     }
     public Intake2_0(HardwareMap hardwareMap, Telemetry telemetry, ElapsedTime timer) {
         this(hardwareMap, telemetry);
@@ -51,28 +61,103 @@ public class Intake2_0 {
     public void stopRollers(){
         rollers.setPower(0);
     }
-    public void runFlywheels(double power){
-        flywheels.setPower(power);
+    public void runFlywheels(double vel){
+        flywheels.setVelocity(vel);
     }
     public void stopFlywheels(){
-        flywheels.setPower(0);
+        flywheels.setVelocity(0);
     }
-    public Action shoot(double time, double p){
-        return new ParallelAction(
-                new SequentialAction(
-                        new InstantAction(() -> runFlywheels(1)),
-                        new SleepAction(time),
-                        new InstantAction(() -> stopFlywheels())
-                )
+    public void runTransferRollers(double power){
+        transferRollers.setPower(power);
+    }
+    public void stopTransferRollers(){
+        transferRollers.setPower(0);
+    }
+    public void hoodAdjusterToPos(double position){
+        hoodAdjuster.setPosition(position);
+    }
+
+    public static void initHood(){
+        hoodAdjuster.setPosition(0.5);
+    }
+    /*public void updateFlywheels(){
+        flywheels.update();
+    }*/
+    public void prepShooter(double power){
+        //hoodAdjuster.setPosition(0.5);
+        flywheels.setPower(power);
+        telemetry.addLine("Ready To Shoot");
+        telemetry.addData("Flywheel Velocity: ", flywheels.getVelocity());
+        telemetry.update();
+    }
+    public void shoot(){
+        transferArtifacts();
+        telemetry.update();
+    }
+    public void transferArtifacts(){
+        rollers.setPower(1);
+        transferRollers.setPower(1);
+        telemetry.update();
+    }
+    public void resetOuttake(){
+        rollers.setPower(0);
+        transferRollers.setPower(0);
+        flywheels.setPower(0);
+        telemetry.clear();
+        telemetry.addLine("Reset Complete");
+        telemetry.update();
+    }
+    public Action runShooter(double vel, double time){
+            return new SequentialAction(
+                    new InstantAction(() -> runFlywheels(vel)),
+                    new SleepAction(time),
+                    new InstantAction(() -> stopFlywheels())
+            );
+    }
+    public Action stopShooter(){
+        return new SequentialAction(
+                new InstantAction(() -> stopFlywheels())
         );
     }
+    public Action shoot(double time, double vel){
+                return new SequentialAction(
+                        new InstantAction(() -> runFlywheels(vel)),
+                        new SleepAction(time),
+                        new InstantAction(() -> stopFlywheels())
+                );
+    }
     public Action collect(double time) {
-        return new ParallelAction(
-                new SequentialAction(
+        return new SequentialAction(
                         new InstantAction(() -> runRollers(1)),
                         new SleepAction(time),
                         new InstantAction(() -> stopRollers())
-                )
         );
     }
-}
+    public Action transferUsingRollersForTime(double time, double p){
+        return new SequentialAction(
+                        new InstantAction(() -> runTransferRollers(0.85)),
+                        new InstantAction(() -> runRollers(p)),
+                        new SleepAction(time),
+                        new InstantAction(() -> stopTransferRollers()),
+                        new InstantAction(() -> stopRollers())
+        );
+    }
+    public Action transferUsingRollers(double p){
+                return new ParallelAction(
+                        new InstantAction(() -> runTransferRollers(p)),
+                        new InstantAction(() -> runRollers(p))
+                );
+        }
+        public Action disableTransfer(){
+            return new ParallelAction(
+                    new InstantAction(() -> stopTransferRollers()),
+                    new InstantAction(() -> stopRollers())
+            );
+        }
+        public Action setHoodAdjuster(double pos){
+            return new SequentialAction(
+                    new InstantAction(() -> hoodAdjusterToPos(pos))
+            );
+        }
+    }
+
