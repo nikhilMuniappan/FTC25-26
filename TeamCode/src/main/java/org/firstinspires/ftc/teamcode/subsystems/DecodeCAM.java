@@ -36,6 +36,8 @@ public class DecodeCAM extends Subsystem{
     OpenCvCamera camera;
     Telemetry telemetry;
 
+    public String motif;
+
     public void init(android.content.Context appContext, com.qualcomm.robotcore.hardware.HardwareMap hardwareMap) {
         if (aprilTagProcessor == null) {
             aprilTagProcessor = new AprilTagProcessor.Builder()
@@ -63,10 +65,11 @@ public class DecodeCAM extends Subsystem{
 
         for (AprilTagDetection tag : detections) {
             switch (tag.id) {
-                case 21: return "GPP";
-                case 22: return "PGP";
-                case 23: return "PPG";
+                case 21: motif = "GPP";
+                case 22: motif = "PGP";
+                case 23: motif = "PPG";
             }
+            return motif;
         }
         return "Unknown Motif";
     }

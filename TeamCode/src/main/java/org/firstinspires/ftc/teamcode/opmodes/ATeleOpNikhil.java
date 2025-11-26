@@ -50,6 +50,9 @@ public class ATeleOpNikhil extends LinearOpMode{
         transferRollers.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         hoodAdjuster.setPosition(DECODERobotConstants.hoodStartPos);
+
+        flywheels.setCustomVelocityPID(0.0, 0.008, 0.015, 0.0001, 0.000426);
+
         double hoodPos = hoodAdjuster.getPosition();
         boolean lastUp = false;
         boolean lastDown = false;
@@ -64,7 +67,7 @@ public class ATeleOpNikhil extends LinearOpMode{
         waitForStart();
 
         while (!isStopRequested() && opModeIsActive()) {
-
+            flywheels.updateFlywheels();
             boolean hoodUp = gamepad2.dpad_up;
             boolean hoodDown = gamepad2.dpad_down;
             telemetry.addData("hoodAdjuster Position: ", hoodAdjuster.getPosition());
@@ -102,6 +105,7 @@ public class ATeleOpNikhil extends LinearOpMode{
 
             if(gamepad2.a){
                 rollers.setPower(1.0);
+                transferRollers.setPower(0);
             }else if(gamepad2.b){
                 rollers.setPower(0);
             }
@@ -112,22 +116,22 @@ public class ATeleOpNikhil extends LinearOpMode{
                 shoot();
             }else if(gamepad1.dpad_up){
                 hoodPos = hoodClosePos;
-                flywheels.setVelocity(shooterCloseVel);
+                flywheels.setCustomVelocityPID(shooterCloseVel, 0.008, 0.015, 0.0001, 0.000426);
             }else if(gamepad1.dpad_down){
                 hoodPos = hoodFarPos;
-                flywheels.setVelocity(shooterFarVel);
+                flywheels.setCustomVelocityPID(shooterFarVel, 0.008, 0.015, 0.0001, 0.000426);
             }else if(gamepad2.x){
                 prepShooter(shooterFarVel);
                 hoodPos = hoodFarPos;
                 flywheelsActive = true;
             }else if(gamepad2.right_bumper){
-                flywheels.setPower(-800);
+                flywheels.setCustomVelocityPID(-800, 0.008, 0.015, 0.0001, 0.000426);
                 transferRollers.setPower(-0.7);
                 rollers.setPower(-0.9);
                 flywheelsActive = false;
-            }/*else if(gamepad2.left_bumper){
-                flywheels.setVelocity(0);
-            }*/else if(hoodUp && !lastUp) {
+            }else if(gamepad2.left_bumper){
+                flywheels.setCustomVelocityPID(0, 0.008, 0.015, 0.0001, 0.000426);
+            }else if(hoodUp && !lastUp) {
                 hoodPos -= 0.15;
             }else if (hoodDown && !lastDown) {
                 hoodPos += 0.15;
@@ -157,7 +161,6 @@ public class ATeleOpNikhil extends LinearOpMode{
 
 
             hoodAdjuster.setPosition(hoodPos);
-            telemetry.addData("flywheel power: ", flywheels.getPower());
             telemetry.update();
         }
     }
@@ -181,8 +184,7 @@ public class ATeleOpNikhil extends LinearOpMode{
         return Math.copySign(Math.sqrt(Math.abs(number)), number);
     }
     private void prepShooter(double vel){
-        flywheels.setVelocity(vel);
-        rollers.setPower(0);
+        flywheels.setCustomVelocityPID(vel, 0.008, 0.015, 0.0001, 0.000426);
         transferRollers.setPower(0);
     }
     private void shoot(){
@@ -191,7 +193,7 @@ public class ATeleOpNikhil extends LinearOpMode{
     }
     private void transferArtifacts(){
         rollers.setPower(1.0);
-        transferRollers.setPower(0.75);
+        transferRollers.setPower(0.8);
         telemetry.update();
     }
     private void resetOuttake(){

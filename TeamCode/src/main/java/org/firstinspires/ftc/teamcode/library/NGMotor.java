@@ -110,9 +110,10 @@ public class NGMotor extends Subsystem {
         double P_Term = kP * error;
 
         flywheelIntegralSum += error * loopTime;
-        if (flywheelIntegralSum > 1.0) flywheelIntegralSum = 1.0;
-        if (flywheelIntegralSum < -1.0) flywheelIntegralSum = -1.0;
+
         double I_Term = kI * integralSum;
+        if (flywheelIntegralSum > 1) flywheelIntegralSum = 1;
+        if (flywheelIntegralSum < -1) flywheelIntegralSum = -1;
 
         double derivative = (loopTime > 0) ? (error - flywheelLastError) / loopTime : 0;
         flywheelLastError = error;
@@ -122,11 +123,13 @@ public class NGMotor extends Subsystem {
 
         double finalPower = P_Term + I_Term + D_Term + F_Term;
 
-        finalPower = Range.clip(finalPower, -1.0, 1.0);
+        finalPower = Range.clip(finalPower, -1, 1);
         pid_motor.setPower(finalPower);
 
         telemetry.addData("P/I/D/F Terms", "P: %.3f, I: %.3f, D: %.3f, F: %.3f", P_Term, I_Term, D_Term, F_Term);
         telemetry.addData("Final Power", finalPower);
+        telemetry.addData("Target Vel: ", targetVelocity);
+        telemetry.addData("Error: ", error);
     }
 
     public void addPower(double power){
@@ -219,7 +222,7 @@ public class NGMotor extends Subsystem {
     @Override
     public void init(){
         pid_motor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        pid_motor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        pid_motor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         pid_motor.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
     }
     public double getCurrent(){

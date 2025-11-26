@@ -56,9 +56,9 @@ public class FlywheelPIDTesting extends LinearOpMode{
             flywheels.updateFlywheels();
 
             if(gamepad2.dpad_right){
-                flywheels.setCustomVelocityPID(1400, 0.8, 0.0004, 0.0003, 0.008);
+                flywheels.setCustomVelocityPID(1400, 0.0006, 0.0009, 0.000085, 0.000471);
             }else if(gamepad2.dpad_left){
-                flywheels.setCustomVelocityPID(0, 0.8, 0.0001, 0.0, 0.000892);
+                flywheels.setCustomVelocityPID(0, 0.0006, 0.0009, 0.000085, 0.000471);
             }
             if(gamepad2.a){
                 rollers.setPower(1.0);
@@ -66,7 +66,7 @@ public class FlywheelPIDTesting extends LinearOpMode{
                 rollers.setPower(0);
             }
             if(gamepad2.right_trigger>=0.1){
-                transferRollers.setPower(0.85);
+                transferRollers.setPower(1.0);
                 rollers.setPower(1);
             }else if(gamepad2.y){
                 rollers.setPower(0);

@@ -55,8 +55,8 @@ public abstract class NGAutoOpMode extends LinearOpMode {
         //drive.mountTrafficLight(trafficLight);
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
         intake2_0 = new Intake2_0(hardwareMap, telemetry, timer);
-        hoodAdjuster.setPosition(DECODERobotConstants.hoodStartPos);
         Intake2_0.initHood();
+        Intake2_0.initFlywheels();
         //RobotConstants.auto_transfer = true;
         //vihasCameraArm = new VihasCameraArm(hardwareMap, telemetry);
         //intake = new Intake(hardwareMap, telemetry, timer, trafficLight);

@@ -33,7 +33,7 @@ public class Intake2_0 {
     Telemetry telemetry;
     ElapsedTime timer;
     public NGMotor rollers;
-    public NGMotor flywheels;
+    public static NGMotor flywheels;
     public static Servo hoodAdjuster;
     public NGMotor transferRollers;
 
@@ -47,7 +47,6 @@ public class Intake2_0 {
         flywheels.init();
         flywheels.setZeroPowerBehavior_Brake();
         transferRollers.setDirection(DcMotor.Direction.REVERSE);
-        //flywheels.setFlywheelPIDF(0.0002, 0, 0, 0.0006);
         hoodAdjuster = hardwareMap.get(Servo.class, DECODERobotConstants.hoodAdjuster);
     }
     public Intake2_0(HardwareMap hardwareMap, Telemetry telemetry, ElapsedTime timer) {
@@ -62,10 +61,13 @@ public class Intake2_0 {
         rollers.setPower(0);
     }
     public void runFlywheels(double vel){
-        flywheels.setVelocity(vel);
+        flywheels.setCustomVelocityPID(vel, 0.008, 0.015, 0.0001, 0.000426);
     }
     public void stopFlywheels(){
-        flywheels.setVelocity(0);
+        flywheels.setCustomVelocityPID(0, 0.008, 0.015, 0.0001, 0.000426);
+    }
+    public static void initFlywheels(){
+        flywheels.setCustomVelocityPID(0, 0.008, 0.015, 0.0001, 0.000426);
     }
     public void runTransferRollers(double power){
         transferRollers.setPower(power);
@@ -76,10 +78,34 @@ public class Intake2_0 {
     public void hoodAdjusterToPos(double position){
         hoodAdjuster.setPosition(position);
     }
+    public void updateVelocity(){
+        if(DECODERobotConstants.flywheelsActive) {
+            flywheels.updateFlywheels();
+        }
+    }
+    /*public Action updateFlywheelPID(){
+        return new InstantAction(() -> updateVelocity());
+    }*/
+
+    public class updateAction implements Action{
+
+        @Override
+            public boolean run(@NonNull TelemetryPacket telemetryPacket) {
+                flywheels.updateFlywheels();
+
+                telemetry.addData("FW Current Vel", "%.1f", flywheels.getVelocity());
+
+                return true;
+            }
+        }
+    public Action updateFlywheelPID(){
+        return new updateAction();
+    }
 
     public static void initHood(){
-        hoodAdjuster.setPosition(0.5);
+        hoodAdjuster.setPosition(1.0);
     }
+
     /*public void updateFlywheels(){
         flywheels.update();
     }*/
@@ -133,9 +159,16 @@ public class Intake2_0 {
                         new InstantAction(() -> stopRollers())
         );
     }
+    public Action preventEscape(double time){
+        return new SequentialAction(
+                new InstantAction(() -> runRollers(0.3)),
+                new SleepAction(time),
+                new InstantAction(() -> stopRollers())
+        );
+    }
     public Action transferUsingRollersForTime(double time, double p){
         return new SequentialAction(
-                        new InstantAction(() -> runTransferRollers(0.85)),
+                        new InstantAction(() -> runTransferRollers(1.0)),
                         new InstantAction(() -> runRollers(p)),
                         new SleepAction(time),
                         new InstantAction(() -> stopTransferRollers()),

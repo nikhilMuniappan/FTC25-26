@@ -293,9 +293,12 @@ public class MeepMeepTestingNikhil {
                 .strafeToSplineHeading(new Vector2d(-50, -36), Math.toRadians(55), new TranslationalVelConstraint(80))
                 .build())
 */
-        sampleBot.runAction(sampleBot.getDrive().actionBuilder(new Pose2d(-52, -48 , Math.toRadians(55)))
+        sampleBot.runAction(sampleBot.getDrive().actionBuilder(new Pose2d(-52, 48 , Math.toRadians(-55)))
                 //.strafeToSplineHeading(new Vector2d(-22, -5), Math.toRadians(55), new TranslationalVelConstraint(50))
-                .lineToY(-22, new TranslationalVelConstraint(60))
+                //.splineToLinearHeading(new Pose2d(35, -24, Math.toRadians(90)), Math.toRadians(3), new TranslationalVelConstraint(50))
+                /*.splineToConstantHeading(new Vector2d(-4, -43.5), Math.toRadians(-90))
+                        .lineToY(-56)*/
+                .splineToLinearHeading(new Pose2d(11, 17, Math.toRadians(-90)), Math.toRadians(-20), new TranslationalVelConstraint(40))
                 .build());
 
         meepMeep.setBackground(MeepMeep.Background.FIELD_DECODE_OFFICIAL)

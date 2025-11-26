@@ -5,6 +5,7 @@ import static org.firstinspires.ftc.teamcode.RobotConstants.ARM_LIMIT;
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -18,7 +19,7 @@ import org.firstinspires.ftc.teamcode.subsystems.MecaTank;
 import org.firstinspires.ftc.teamcode.subsystems.Rigging;
 import org.firstinspires.ftc.teamcode.subsystems.TrafficLight;
 import org.firstinspires.ftc.teamcode.subsystems.VihasCameraArm;
-
+@Disabled
 @com.qualcomm.robotcore.eventloop.opmode.TeleOp
 @Config
 public class ATeleOp extends LinearOpMode {
