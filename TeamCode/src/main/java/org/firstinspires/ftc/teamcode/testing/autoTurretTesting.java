@@ -25,13 +25,14 @@ public class autoTurretTesting extends LinearOpMode {
 
     @Override
     public void runOpMode() throws InterruptedException{
-        CAM.init(hardwareMap.appContext, hardwareMap);
+        CAM.init(hardwareMap.appContext, hardwareMap, telemetry);
+        //CAM.telemetry();
 
         waitForStart();
 
         while (opModeIsActive() && !isStopRequested()) {
             CAM.getGoalTagData();
-            if()
+            telemetry.update();
         }
 
         CAM.stop();

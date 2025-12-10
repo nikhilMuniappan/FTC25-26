@@ -126,9 +126,10 @@ public class NGMotor extends Subsystem {
         finalPower = Range.clip(finalPower, -1, 1);
         pid_motor.setPower(finalPower);
 
-        telemetry.addData("P/I/D/F Terms", "P: %.3f, I: %.3f, D: %.3f, F: %.3f", P_Term, I_Term, D_Term, F_Term);
-        telemetry.addData("Final Power", finalPower);
-        telemetry.addData("Target Vel: ", targetVelocity);
+        //telemetry.addData("P/I/D/F Terms", "P: %.3f, I: %.3f, D: %.3f, F: %.3f", P_Term, I_Term, D_Term, F_Term);
+        //telemetry.addData("Final Power", finalPower);
+        //telemetry.addData("Target Vel: ", targetVelocity);
+        telemetry.addData("Current Velocity: ", currentVelocity);
         telemetry.addData("Error: ", error);
     }
 

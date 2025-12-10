@@ -24,7 +24,7 @@ public class obeliskTesting extends LinearOpMode {
 
     @Override
     public void runOpMode() throws InterruptedException{
-        CAM.init(hardwareMap.appContext, hardwareMap);
+        CAM.init(hardwareMap.appContext, hardwareMap, telemetry);
 
         waitForStart();
 

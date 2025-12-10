@@ -10,10 +10,13 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.ExposureControl;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.GainControl;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Position;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
+import org.firstinspires.ftc.teamcode.Pose2d;
 import org.firstinspires.ftc.teamcode.RobotConstants;
 import org.firstinspires.ftc.teamcode.library.Subsystem;
 import org.firstinspires.ftc.vision.VisionPortal;
@@ -29,34 +32,91 @@ import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class DecodeCAM extends Subsystem{
     private VisionPortal visionPortal;
     private AprilTagProcessor aprilTagProcessor;
     OpenCvCamera camera;
     Telemetry telemetry;
-
     public String motif;
+    private static final Pose2d TAG_24_POSE = new Pose2d(-58.3727f, 55.6425f, Math.toRadians(55)); // Red Goal
+    private static final Pose2d TAG_20_POSE = new Pose2d(-58.3727f, -55.6425f, Math.toRadians(-55)); // Blue Goal
 
-    public void init(android.content.Context appContext, com.qualcomm.robotcore.hardware.HardwareMap hardwareMap) {
+
+    // --- CAMERA OFFSET (MUST BE MEASURED) ---
+    private static final double CAMERA_X_OFFSET = 3.5;
+    private static final double CAMERA_Y_OFFSET = 2;
+
+    public void init(android.content.Context appContext, com.qualcomm.robotcore.hardware.HardwareMap hardwareMap, Telemetry telemetry) {
+        this.telemetry = telemetry;
         if (aprilTagProcessor == null) {
             aprilTagProcessor = new AprilTagProcessor.Builder()
-                    .setCameraPose(
-                            new Position(DistanceUnit.INCH, 4, 1, 10, 0),
-                            new YawPitchRollAngles(AngleUnit.DEGREES, 0, -90, 0, 0)
-                    )
                     .setTagFamily(AprilTagProcessor.TagFamily.TAG_36h11)
                     .setTagLibrary(org.firstinspires.ftc.vision.apriltag.AprilTagGameDatabase.getCurrentGameTagLibrary())
-                    .setOutputUnits(DistanceUnit.INCH, AngleUnit.DEGREES)
+                    .setOutputUnits(DistanceUnit.INCH, AngleUnit.RADIANS)
                     .build();
 
             visionPortal = new VisionPortal.Builder()
                     .setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
                     .addProcessor(aprilTagProcessor)
                     .build();
+           boolean cameraReady = visionPortal.getCameraState() == VisionPortal.CameraState.CAMERA_DEVICE_READY;
+            if(cameraReady) {
+                visionPortal.getCameraControl(ExposureControl.class).setMode(ExposureControl.Mode.Manual);
+                visionPortal.getCameraControl(ExposureControl.class).setExposure(6000, TimeUnit.MICROSECONDS);
+                visionPortal.getCameraControl(GainControl.class).setGain(50);
+            }
         }
     }
 
+    public Pose2d getAbsoluteRobotPose() {
+        List<AprilTagDetection> currentDetections = aprilTagProcessor.getDetections();
+        AprilTagDetection visibleTag = null;
+        Pose2d tagFieldPose = null;
+
+        for (AprilTagDetection detection : currentDetections) {
+            if (detection.metadata != null) {
+                if (detection.id == 20) {
+                    visibleTag = detection;
+                    tagFieldPose = TAG_20_POSE;
+                    break;
+                } else if (detection.id == 24) {
+                    visibleTag = detection;
+                    tagFieldPose = TAG_24_POSE;
+                    break;
+                }
+            }
+        }
+
+        if (visibleTag == null) {
+            return null;
+        }
+
+        double camRelTagX = -visibleTag.ftcPose.x;
+        double camRelTagY = -visibleTag.ftcPose.y;
+        double camRelTagYaw_deg = visibleTag.ftcPose.yaw;
+
+        double camFieldHeading_rad = AngleUnit.normalizeRadians(
+                tagFieldPose.getHeading() - Math.toRadians(camRelTagYaw_deg)
+        );
+
+        double camFieldX = tagFieldPose.getX() - (camRelTagX * Math.cos(camFieldHeading_rad) - camRelTagY * Math.sin(camFieldHeading_rad));
+        double camFieldY = tagFieldPose.getY() - (camRelTagX * Math.sin(camFieldHeading_rad) + camRelTagY * Math.cos(camFieldHeading_rad));
+
+        double robotFieldHeading_rad = camFieldHeading_rad;
+
+        double robotRelCamX_field = CAMERA_X_OFFSET * Math.cos(robotFieldHeading_rad) - CAMERA_Y_OFFSET * Math.sin(robotFieldHeading_rad);
+        double robotRelCamY_field = CAMERA_X_OFFSET * Math.sin(robotFieldHeading_rad) + CAMERA_Y_OFFSET * Math.cos(robotFieldHeading_rad);
+
+        double robotFieldX = camFieldX - robotRelCamX_field;
+        double robotFieldY = camFieldY - robotRelCamY_field;
+
+        telemetry.addData("Pose from Tag", String.format("ID %d -> (%.1f, %.1f, %.1f°)",
+                visibleTag.id, robotFieldX, robotFieldY, Math.toDegrees(robotFieldHeading_rad)));
+
+        return new Pose2d(robotFieldX, robotFieldY, robotFieldHeading_rad);
+    }
     public String getMotif() {
         if (aprilTagProcessor == null) return "Not Initialized";
 
@@ -73,6 +133,7 @@ public class DecodeCAM extends Subsystem{
         }
         return "Unknown Motif";
     }
+
 
     public void getGoalTagData() {
 
@@ -129,8 +190,8 @@ public class DecodeCAM extends Subsystem{
         camera.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener() {
             @Override
             public void onOpened() {
-                camera.startStreaming(960, 544, OpenCvCameraRotation.UPRIGHT);
-                FtcDashboard.getInstance().startCameraStream(camera, 5);
+                camera.startStreaming(1280, 720, OpenCvCameraRotation.UPRIGHT);
+                FtcDashboard.getInstance().startCameraStream(camera, 100);
             }
 
             @Override
