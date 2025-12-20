@@ -39,7 +39,7 @@ public class FlywheelPIDTesting extends LinearOpMode{
         double pos = hoodAdjuster.getPosition();
         boolean lastUp = false;
         boolean lastDown = false;
-        double targetVel = DECODERobotConstants.farShootingVel;
+        double targetVel = DECODERobotConstants.closeZoneShootingVel;
         flywheels.init();
         flywheels.setCustomVelocityPID(0.0, FLYWHEEL_P, FLYWHEEL_I, FLYWHEEL_D, FLYWHEEL_F);
 

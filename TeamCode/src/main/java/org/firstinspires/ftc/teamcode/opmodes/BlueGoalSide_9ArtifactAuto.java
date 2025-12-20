@@ -55,8 +55,8 @@ public class BlueGoalSide_9ArtifactAuto extends NGAutoOpMode {
         telemetry.addLine("Paths Built");
         telemetry.update();
 
-        double shooterTargetVel = DECODERobotConstants.farShootingVel;
-        double hoodShootingPos = DECODERobotConstants.farShootPos;
+        double shooterTargetVel = DECODERobotConstants.closeZoneShootingVel;
+        double hoodShootingPos = DECODERobotConstants.closeShootPos;
 
         waitForStart();
 

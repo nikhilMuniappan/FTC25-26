@@ -57,8 +57,8 @@ public class ATeleOpNikhil extends LinearOpMode{
         boolean lastUp = false;
         boolean lastDown = false;
 
-        double shooterCloseVel = DECODERobotConstants.closeShootingVel;
-        double shooterFarVel = DECODERobotConstants.farShootingVel;
+        double shooterCloseVel = DECODERobotConstants.closeZoneShootingVel;
+        double shooterFarVel = DECODERobotConstants.farZoneShootingVel;
         double hoodClosePos = DECODERobotConstants.closeShootPos;
         double hoodFarPos = DECODERobotConstants.farShootPos;
         boolean shootReady = false;

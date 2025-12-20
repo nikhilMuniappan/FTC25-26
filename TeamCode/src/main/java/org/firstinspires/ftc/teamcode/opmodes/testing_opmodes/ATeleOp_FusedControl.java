@@ -4,11 +4,12 @@ import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.subsystems.DecodeCAM;
-import org.firstinspires.ftc.teamcode.Pose2d;
+import com.acmerobotics.roadrunner.Pose2d;
 
 import org.firstinspires.ftc.teamcode.DECODERobotConstants;
 import org.firstinspires.ftc.teamcode.library.NGMotor;
@@ -22,7 +23,6 @@ public class ATeleOp_FusedControl extends LinearOpMode{
     MecaTank mecaTank;
     private DecodeCAM camera;
     ElapsedTime timer;
-    private NGMotor frontLeft, frontRight, backLeft, backRight;
     private DcMotor rollers;
     private NGMotor flywheels;
     private DcMotor transferRollers;
@@ -34,13 +34,13 @@ public class ATeleOp_FusedControl extends LinearOpMode{
     }
     private Alliance currentAlliance = Alliance.BLUE;
 
-    private static final double GOAL_X = -58.3727f;
-    private static final double BLUE_GOAL_Y = -55.6425f;
-    private static final double RED_GOAL_Y = 55.6425f;
-
+    private static final double GOAL_X = -58.3727;
+    private static final double BLUE_GOAL_Y = -55.6425;
+    private static final double RED_GOAL_Y = 55.6425;
     private double targetGoalY = BLUE_GOAL_Y;
-
     private boolean autoAimActive = false;
+
+    private boolean hasCalibrated = false;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -53,8 +53,13 @@ public class ATeleOp_FusedControl extends LinearOpMode{
         hoodAdjuster = hardwareMap.get(Servo.class, DECODERobotConstants.hoodAdjuster);
         mecaTank = new MecaTank(hardwareMap, telemetry, timer);
         camera = new DecodeCAM();
-
-        mecaTank.setPoseEstimate(new Pose2d(12.0, 12.0, Math.toRadians(0)));
+        Pose2d startPose = null;
+        if(currentAlliance == Alliance.BLUE) {
+            startPose = new Pose2d(5, -10, Math.toRadians(55));
+        }else if(currentAlliance == Alliance.RED){
+            startPose = new Pose2d(5, 10, Math.toRadians(55));
+        }
+        mecaTank = new MecaTank(hardwareMap, telemetry, startPose);
 
         camera.init(hardwareMap.appContext, hardwareMap, telemetry);
 
@@ -74,8 +79,8 @@ public class ATeleOp_FusedControl extends LinearOpMode{
         boolean lastUp = false;
         boolean lastDown = false;
 
-        double shooterCloseVel = DECODERobotConstants.closeShootingVel;
-        double shooterFarVel = DECODERobotConstants.farShootingVel;
+        double shooterCloseVel = DECODERobotConstants.closeZoneShootingVel;
+        double shooterFarVel = DECODERobotConstants.farZoneShootingVel;
         double hoodClosePos = DECODERobotConstants.closeShootPos;
         double hoodFarPos = DECODERobotConstants.farShootPos;
         boolean shootReady = false;
@@ -99,10 +104,10 @@ public class ATeleOp_FusedControl extends LinearOpMode{
 
         waitForStart();
 
-        long startTime = System.currentTimeMillis();
+        long loopStartTime = System.currentTimeMillis();
         boolean poseAcquired = false;
 
-        while (opModeIsActive() && !poseAcquired && (System.currentTimeMillis() < startTime + 5000)) {
+        while(!poseAcquired && (System.currentTimeMillis() - loopStartTime) < 500) {
             Pose2d absoluteCameraPose = camera.getAbsoluteRobotPose();
 
             if (absoluteCameraPose != null) {
@@ -116,7 +121,6 @@ public class ATeleOp_FusedControl extends LinearOpMode{
             telemetry.update();
             sleep(20);
         }
-
         if (!poseAcquired) {
             telemetry.addLine("Warning: Camera pose not acquired. Relying on odometry from default/Auto end pose.");
             telemetry.update();
@@ -125,13 +129,25 @@ public class ATeleOp_FusedControl extends LinearOpMode{
         while (!isStopRequested() && opModeIsActive()) {
             mecaTank.updateAutoAlign();
             flywheels.updateFlywheels();
+            Pose2d currentPose = mecaTank.getPoseEstimate();
 
-            double strafeInput = gamepad1.left_stick_x;
-            double forwardInput = -gamepad1.left_stick_y;
+            if (!autoAimActive) {
+                Pose2d absoluteCameraPose = camera.getAbsoluteRobotPose();
+                if (absoluteCameraPose != null) {
+                    mecaTank.setPoseEstimate(absoluteCameraPose);
+                    hasCalibrated = true;
+                }
+            }
+
+            double rawStrafe = gamepad1.left_stick_x;
+            double rawForward = -gamepad1.left_stick_y;
             double manualTurnInput = gamepad1.right_stick_x;
 
-            boolean hoodUp = gamepad2.dpad_up;
-            boolean hoodDown = gamepad2.dpad_down;
+            double strafeInput = (Math.abs(rawStrafe) > 0.05) ? rawStrafe : 0.0;
+            double forwardInput = (Math.abs(rawForward) > 0.05) ? rawForward : 0.0;
+
+            boolean hoodUp = gamepad2.dpad_right;
+            boolean hoodDown = gamepad2.dpad_left;
             //telemetry.addData("hoodAdjuster Position: ", hoodAdjuster.getPosition());
             //telemetry.addData("Flywheel Vel: ", flywheels.getVelocity());
             //telemetry.update();
@@ -142,44 +158,63 @@ public class ATeleOp_FusedControl extends LinearOpMode{
                 autoAimActive = false;
             }
 
-            Pose2d currentPose = mecaTank.getPoseEstimate();
-
             if (autoAimActive) {
+                double dx = GOAL_X - currentPose.position.x;
+                double dy = targetGoalY - currentPose.position.y;
 
-                double targetHeading_rad = Math.atan2(
-                        targetGoalY - currentPose.getY(),
-                        GOAL_X - currentPose.getX()
-                );
+                double targetHeadingRad = Math.atan2(dy, dx);
+                double targetHeadingDeg = Math.toDegrees(targetHeadingRad);
+
                 double finalTurnPower = mecaTank.calculateAutoTurnPower(
-                        Math.toDegrees(targetHeading_rad),
-                        Math.toDegrees(currentPose.getHeading())
+                        targetHeadingDeg,
+                        Math.toDegrees(currentPose.heading.toDouble())
                 );
-                mecaTank.driveFieldCentric(strafeInput, forwardInput, finalTurnPower, Math.toDegrees(currentPose.getHeading()));
 
-                double deltaX = GOAL_X - currentPose.getX();
-                double deltaY = targetGoalY - currentPose.getY();
-                double distanceToGoal = Math.hypot(deltaX, deltaY);
+                mecaTank.driveRobotCentric(strafeInput, forwardInput, finalTurnPower);
+
+                double distanceToGoal = Math.hypot(dx, dy);
 
                 telemetry.addData("Target Goal", "%s (%.1f, %.1f)",
                         currentAlliance, GOAL_X, targetGoalY);
                 telemetry.addData("Distance", "%.1f in", distanceToGoal);
-
             } else {
-                Pose2d absoluteCameraPose = camera.getAbsoluteRobotPose();
+                /*Pose2d absoluteCameraPose = camera.getAbsoluteRobotPose();
                 if (absoluteCameraPose != null) {
                     mecaTank.setPoseEstimate(absoluteCameraPose);
                     telemetry.addData("Pose Status", "RE-CALIBRATED from AprilTag");
                 } else {
                     telemetry.addData("Pose Status", "Coasting on Odometry (Full)");
-                }
-
+                }*/
                 mecaTank.setDrivePowers(gamepad1.left_stick_y, gamepad1.right_stick_y, gamepad1.left_trigger, gamepad1.right_trigger);
+
             }
 
+            boolean PosOverride = (Math.abs(gamepad1.right_stick_y) > 0.1 || Math.abs(gamepad1.left_stick_y) > 0.1);
+            //Automated Base Parking
+            if(gamepad1.b){
+                if(currentAlliance == Alliance.BLUE) {
+                    mecaTank.moveToPositionBlocking(this, 37, 33, 90, 0.6, 4, PosOverride);
+                }else if(currentAlliance == Alliance.RED){
+                    mecaTank.moveToPositionBlocking(this, 37, -33, -90, 0.6, 4, PosOverride);
+                }
+            }
+
+            //Automated far shooting position
+            if(gamepad1.x){
+                if(currentAlliance == Alliance.BLUE) {
+                    mecaTank.moveToPositionBlocking(this, 54, -10, 35, 0.6, 4, PosOverride);
+                }else if(currentAlliance == Alliance.RED){
+                    mecaTank.moveToPositionBlocking(this, 54, 10, -35, 0.6, 4, PosOverride);
+                }
+            }
+
+            if (!hasCalibrated) telemetry.addData("Status", "NOT CALIBRATED (Drive to see Tag)");
+            else telemetry.addData("Status", "CALIBRATED");
+
             telemetry.addData("Current Pose (X, Y, H)", "%.2f, %.2f, %.2f",
-                    currentPose.getX(),
-                    currentPose.getY(),
-                    Math.toDegrees(currentPose.getHeading()));
+                    currentPose.position.x,
+                    currentPose.position.y,
+                    Math.toDegrees(currentPose.heading.toDouble()));
             telemetry.update();
 
             if(gamepad2.a){
@@ -193,15 +228,15 @@ public class ATeleOp_FusedControl extends LinearOpMode{
                 flywheelsActive = false;
             }else if(gamepad2.right_trigger > 0.1){
                 shoot();
-            }else if(gamepad1.dpad_up){
+            }else if(gamepad2.dpad_up){
                 hoodPos = hoodClosePos;
                 flywheels.setCustomVelocityPID(shooterCloseVel, 0.008, 0.015, 0.0001, 0.000426);
-            }else if(gamepad1.dpad_down){
+            }else if(gamepad2.dpad_down){
                 hoodPos = hoodFarPos;
                 flywheels.setCustomVelocityPID(shooterFarVel, 0.008, 0.015, 0.0001, 0.000426);
             }else if(gamepad2.x){
-                prepShooter(shooterFarVel);
-                hoodPos = hoodFarPos;
+                prepShooter(shooterCloseVel);
+                hoodPos = hoodClosePos;
                 flywheelsActive = true;
             }else if(gamepad2.right_bumper){
                 flywheels.setCustomVelocityPID(-800, 0.008, 0.015, 0.0001, 0.000426);
@@ -219,7 +254,6 @@ public class ATeleOp_FusedControl extends LinearOpMode{
             lastUp = hoodUp;
             lastDown = hoodDown;
             hoodPos = Range.clip(hoodPos, 0, 1);
-
 
             hoodAdjuster.setPosition(hoodPos);
             telemetry.update();
@@ -246,4 +280,3 @@ public class ATeleOp_FusedControl extends LinearOpMode{
         transferRollers.setPower(0);
     }
 }
-

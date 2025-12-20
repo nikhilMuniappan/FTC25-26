@@ -18,7 +18,7 @@ public class PoseTrasnferTest extends TestingOpMode {
     public void runOpMode() throws InterruptedException {
         makeTelemetry();
         mecanumDrive = new MecanumDrive(hardwareMap, pose);
-        mecaTank = new MecaTank(hardwareMap, telemetry);
+        //mecaTank = new MecaTank(hardwareMap, telemetry);
 
         waitForStart();
         while(opModeIsActive() && !isStopRequested()){

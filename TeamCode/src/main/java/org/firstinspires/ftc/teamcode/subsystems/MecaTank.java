@@ -3,7 +3,11 @@ package org.firstinspires.ftc.teamcode.subsystems;
 import static org.firstinspires.ftc.teamcode.roadrunner.MecanumDrive.PARAMS;
 
 import com.acmerobotics.dashboard.config.Config;
-//import com.acmerobotics.roadrunner.Pose2d;
+import com.acmerobotics.roadrunner.Action;
+import com.acmerobotics.roadrunner.Pose2d;
+import com.acmerobotics.roadrunner.PoseVelocity2d;
+import com.acmerobotics.roadrunner.Rotation2d;
+import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Encoder;
 import com.acmerobotics.roadrunner.ftc.LazyImu;
 import com.acmerobotics.roadrunner.ftc.OverflowEncoder;
@@ -22,7 +26,8 @@ import org.firstinspires.ftc.teamcode.DECODERobotConstants;
 import org.firstinspires.ftc.teamcode.library.Control;
 import org.firstinspires.ftc.teamcode.library.NGMotor;
 import org.firstinspires.ftc.teamcode.library.Subsystem;
-import org.firstinspires.ftc.teamcode.Pose2d;
+import org.firstinspires.ftc.teamcode.roadrunner.MecanumDrive;
+//import org.firstinspires.ftc.teamcode.Pose2d;
 
 @Config
 public class MecaTank extends Subsystem {
@@ -35,6 +40,7 @@ public class MecaTank extends Subsystem {
     public Distance rear_distance;
     private Telemetry telemetry;
     private double MAX_DRIVE_SPEED = 1;
+
     private boolean left_strafe = false;
     private boolean right_strafe = false;
     private boolean force_exit = false;
@@ -75,20 +81,26 @@ public class MecaTank extends Subsystem {
     double error;
 
     double targetHeading = 0;
-    public final Encoder par, perp;
-    private org.firstinspires.ftc.teamcode.Pose2d currentPose = new org.firstinspires.ftc.teamcode.Pose2d(0, 0, 0);
-    private static final double HEADING_KP = 0.02;
-    private static final double MAX_TURN_POWER = 0.8;
-
-    // Encoder Tracking (2-Wheel Setup)
-    private int prevParallelTicks = 0; // Tracks Forward/Backward (Y-motion)
-    private int prevPerpTicks = 0;     // Tracks Strafing (X-motion)
-    private double prevImuHeadingRad = 0.0; // Tracks Heading (Theta-motion)
-    // Odometry Constants
+    //public final Encoder par, perp;
+    //private org.firstinspires.ftc.teamcode.Pose2d currentPose = new org.firstinspires.ftc.teamcode.Pose2d(0, 0, 0);
+    private Pose2d currentPose = new Pose2d(0,0, 0);
+    private static final double HEADING_KP = 0.012;
+    private static final double HEADING_KS = 0.8701732592256377;
+    private static final double DRIVE_KP = 0.008;   //Power per inch of error
+    private static final double STRAFE_KP = 0.11;
+    private static final double MAX_TURN_POWER = 0.7;
+    private int prevParallelTicks = 0; //Tracks Forward/Backward
+    private int prevPerpTicks = 0;     //Tracks Strafing
+    private double prevImuHeadingRad = 0.0; //Tracks Heading
     private static final double TICKS_PER_INCH = 355.15835;
     private static final double TRACK_WIDTH_INCHES = 10.81983;
+    private static final double DISTANCE_TOLERANCE = 1.0;
+    private static final double HEADING_TOLERANCE = 2.0;
     private ElapsedTime timer;
-    public MecaTank(HardwareMap hardwareMap, Telemetry telemetry){
+    public MecanumDrive drive;
+    public DecodeCAM camera;
+
+    public MecaTank(HardwareMap hardwareMap, Telemetry telemetry, Pose2d startPose){
         frontLeft = new NGMotor(hardwareMap, telemetry, DECODERobotConstants.fl);
         frontRight = new NGMotor(hardwareMap, telemetry, DECODERobotConstants.fr);
         backLeft = new NGMotor(hardwareMap, telemetry, DECODERobotConstants.bl);
@@ -97,7 +109,7 @@ public class MecaTank extends Subsystem {
         //distance = new Distance(hardwareMap, telemetry, RobotConstants.distance);
 //        rear_distance = new Distance(hardwareMap, telemetry, RobotConstants.rear_distance);
         imu = new LazyImu(hardwareMap, "imu", new RevHubOrientationOnRobot(
-                PARAMS.logoFacingDirection, PARAMS.usbFacingDirection));
+                RevHubOrientationOnRobot.LogoFacingDirection.LEFT, RevHubOrientationOnRobot.UsbFacingDirection.UP));
         //trafficLight = new TrafficLight("Traffic Light", hardwareMap, telemetry, RobotConstants.red_led, RobotConstants.green_led);
         backRight.setDirection(DcMotor.Direction.FORWARD);
         frontRight.setDirection(DcMotor.Direction.FORWARD);
@@ -110,17 +122,14 @@ public class MecaTank extends Subsystem {
         timer = new ElapsedTime();
         this.telemetry = telemetry;
 
-        par = new OverflowEncoder(new RawEncoder(hardwareMap.get(DcMotorEx.class, DECODERobotConstants.bl)));
-        perp = new OverflowEncoder(new RawEncoder(hardwareMap.get(DcMotorEx.class, DECODERobotConstants.br)));
-
-        perp.setDirection(DcMotorSimple.Direction.REVERSE);
-        par.setDirection(DcMotorSimple.Direction.REVERSE);
-
+        drive = new MecanumDrive(hardwareMap, startPose);
         imu.get().resetYaw();
     }
 
     public void updateAutoAlign() {
-        int currentParallelTicks = backLeft.getCurrentPosition();
+        drive.updatePoseEstimate();
+        telemetry.addData("Deadwheel Pose: ", "%.2f, %.2f", drive.pose.position.x, drive.pose.position.y);
+        /*int currentParallelTicks = backLeft.getCurrentPosition();
         int currentPerpTicks = backRight.getCurrentPosition();
         double currentImuHeadingRad = imu.get().getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
 
@@ -144,19 +153,54 @@ public class MecaTank extends Subsystem {
                 currentPose.getX() + dX_field,
                 currentPose.getY() + dY_field,
                 currentPose.getHeading() + dHeading // IMU-driven heading update
-        );
+        );*/
     }
 
     public void setPoseEstimate(Pose2d newPose) {
-        this.currentPose = newPose;
+        drive.pose = newPose;
+        /* this.currentPose = newPose;
 
         imu.get().resetYaw();
-        prevImuHeadingRad = 0.0;
+        prevImuHeadingRad = 0.0;*/
     }
     public Pose2d getPoseEstimate() {
-        return currentPose;
+        return drive.pose;
     }
     public void driveFieldCentric(double strafe, double forward, double turn, double currentHeading) {
+        double heading = drive.pose.heading.toDouble();
+
+        double rotX = strafe * Math.cos(-heading) - forward * Math.sin(-heading);
+        double rotY = strafe * Math.sin(-heading) + forward * Math.cos(-heading);
+
+        drive.setDrivePowers(new PoseVelocity2d(
+                new Vector2d(rotY, rotX),
+                turn
+        ));
+        /*double inputPower = Math.hypot(strafe, forward);
+        double inputAngle = Math.atan2(forward, strafe);
+
+        double headingRad = Math.toRadians(currentHeading);
+        double relativeAngle = inputAngle - headingRad;
+
+        double rotatedStrafe = inputPower * Math.cos(relativeAngle);
+        double rotatedForward = inputPower * Math.sin(relativeAngle);
+
+        double lfPower = rotatedForward + rotatedStrafe + turn;
+        double rfPower = rotatedForward - rotatedStrafe - turn;
+        double lbPower = rotatedForward - rotatedStrafe + turn;
+        double rbPower = rotatedForward + rotatedStrafe - turn;
+
+        double maxPower = Math.max(Math.abs(lfPower), Math.abs(rfPower));
+        maxPower = Math.max(maxPower, Math.max(Math.abs(lbPower), Math.abs(rbPower)));
+
+        if (maxPower > 1.0) {
+            lfPower /= maxPower; rfPower /= maxPower;
+            lbPower /= maxPower; rbPower /= maxPower;
+        }
+
+        frontLeft.setPower(lfPower); frontRight.setPower(rfPower);
+        backLeft.setPower(lbPower); backRight.setPower(rbPower);
+
         double headingInRadians = Math.toRadians(currentHeading);
         double rotatedStrafe = strafe * Math.cos(headingInRadians) - forward * Math.sin(headingInRadians);
         double rotatedForward = strafe * Math.sin(headingInRadians) + forward * Math.cos(headingInRadians);
@@ -182,15 +226,123 @@ public class MecaTank extends Subsystem {
         frontRight.setPower(rfPower);
         backLeft.setPower(lbPower);
         backRight.setPower(rbPower);
+        */
     }
     public double calculateAutoTurnPower(double targetHeading, double currentHeading) {
-        double headingError = AngleUnit.DEGREES.normalize(targetHeading - currentHeading);
-        double turnPower = headingError * HEADING_KP;
+        double error = targetHeading - currentHeading;
+        while (error > 180)  error -= 360;
+        while (error <= -180) error += 360;
+
+        double turnPower = error * 0.02;
         return Math.max(-MAX_TURN_POWER, Math.min(turnPower, MAX_TURN_POWER));
+
+        /*double headingError = AngleUnit.DEGREES.normalize(targetHeading - currentHeading);
+        double turnPower = headingError * HEADING_KP;
+        return Math.max(-MAX_TURN_POWER, Math.min(turnPower, MAX_TURN_POWER));*/
     }
 
-    public double getCurrentHeading() {
-        return Math.toDegrees(currentPose.getHeading());
+    public void driveRobotCentric(double strafe, double forward, double turn) {
+        drive.setDrivePowers(new PoseVelocity2d(
+                new Vector2d(forward, strafe),
+                turn
+        ));
+        /*double lfPower = forward + strafe + turn;
+        double rfPower = forward - strafe - turn;
+        double lbPower = forward - strafe + turn;
+        double rbPower = forward + strafe - turn;
+
+        // Normalize speeds
+        double maxPower = Math.max(Math.abs(lfPower), Math.abs(rfPower));
+        maxPower = Math.max(maxPower, Math.max(Math.abs(lbPower), Math.abs(rbPower)));
+
+        if (maxPower > 1.0) {
+            lfPower /= maxPower; rfPower /= maxPower;
+            lbPower /= maxPower; rbPower /= maxPower;
+        }
+
+        frontLeft.setPower(lfPower); frontRight.setPower(rfPower);
+        backLeft.setPower(lbPower); backRight.setPower(rbPower);*/
+    }
+
+    public void moveToPositionBlocking(LinearOpMode opMode, double targetX, double targetY, double targetHeadingDeg, double maxSpeed, double timeoutSec, boolean manualOverride) {
+        double targetHeadingRad = Math.toRadians(targetHeadingDeg);
+
+        Action moveAction = drive.actionBuilder(drive.pose)
+                .strafeToLinearHeading(new Vector2d(targetX, targetY), targetHeadingRad)
+                .build();
+
+        ElapsedTime moveTimer = new ElapsedTime();
+
+        boolean active = true;
+
+        com.acmerobotics.dashboard.telemetry.TelemetryPacket packet = new com.acmerobotics.dashboard.telemetry.TelemetryPacket();
+
+        while (active && opMode.opModeIsActive() && moveTimer.seconds() < timeoutSec && !manualOverride) {
+            active = moveAction.run(packet);
+
+            if (Math.abs(opMode.gamepad1.left_stick_x) > 0.1) manualOverride = true;
+        }
+
+        drive.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
+        /*ElapsedTime timer = new ElapsedTime();
+
+        while (opMode.opModeIsActive() && timer.seconds() < timeoutSec && !manualOverride) {
+            updateAutoAlign();
+            Pose2d pose = getPoseEstimate();
+
+            //Field-Centric Error
+            double xError = targetX - pose.getX();
+            double yError = targetY - pose.getY();
+            double headingError = targetHeadingDeg - Math.toDegrees(pose.getHeading());
+
+            // Normalized Heading Error (-180 - 180)
+            while (headingError > 180)  headingError -= 360;
+            while (headingError <= -180) headingError += 360;
+
+            double distanceError = Math.hypot(xError, yError);
+            if (distanceError < DISTANCE_TOLERANCE && Math.abs(headingError) < HEADING_TOLERANCE) {
+                break;
+            }
+
+            //Rotated Robot-Centric Error
+            double currentHeadingRad = pose.getHeading();
+            double forward = xError * Math.cos(-currentHeadingRad) - yError * Math.sin(-currentHeadingRad);
+            double strafe = xError * Math.sin(-currentHeadingRad) + yError * Math.cos(-currentHeadingRad);
+
+            //P-Control
+            double forwardPower = forward * DRIVE_KP;
+            double strafePower = strafe * STRAFE_KP;
+            double turnPower = headingError * HEADING_KP;
+
+            //Normalized and Clipped Powers
+            double driveScale = Math.max(Math.abs(forwardPower), Math.abs(strafePower));
+            if (driveScale > maxSpeed) {
+                forwardPower = (forwardPower / driveScale) * maxSpeed;
+                strafePower = (strafePower / driveScale) * maxSpeed;
+            }
+
+            double lf = forwardPower + strafePower + turnPower;
+            double rf = forwardPower - strafePower - turnPower;
+            double lb = forwardPower - strafePower + turnPower;
+            double rb = forwardPower + strafePower - turnPower;
+
+            double max = Math.max(Math.abs(lf), Math.max(Math.abs(rf), Math.max(Math.abs(lb), Math.abs(rb))));
+            if (max > 1.0) {
+                lf /= max; rf /= max; lb /= max; rb /= max;
+            }
+            driveRobotCentric(strafePower, forwardPower, turnPower);
+        }
+
+        frontLeft.setPower(0);
+        frontRight.setPower(0);
+        backLeft.setPower(0);
+        backRight.setPower(0);*/
+    }
+
+
+
+    public Rotation2d getCurrentHeading() {
+        return drive.pose.heading;
     }
 
     public boolean isFrontDistance(){
@@ -198,7 +350,7 @@ public class MecaTank extends Subsystem {
     }
 
     public MecaTank(HardwareMap hardwareMap, Telemetry telemetry, ElapsedTime timer){
-        this(hardwareMap, telemetry);
+        //this(hardwareMap, telemetry);
         this.timer = timer;
     }
     public void setDistanceType(boolean front){

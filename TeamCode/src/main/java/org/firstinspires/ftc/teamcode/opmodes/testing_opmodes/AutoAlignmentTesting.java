@@ -13,7 +13,7 @@ public class AutoAlignmentTesting extends LinearOpMode {
 
     @Override
     public void runOpMode() throws InterruptedException{
-        robot = new MecaTank(hardwareMap, telemetry);
+        //robot = new MecaTank(hardwareMap, telemetry);
 
         waitForStart();
 

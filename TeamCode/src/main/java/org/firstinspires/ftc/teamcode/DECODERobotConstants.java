@@ -9,9 +9,10 @@ public class DECODERobotConstants {
     public static double
             hoodStartPos = 1.0,
             closeShootPos = 1.0,
-            farShootPos = 1.0,
-            farShootingVel = 1300,
-            closeShootingVel = 1100;
+            farShootPos = 0.85,
+            //farShootingVel = 1300,
+            farZoneShootingVel = 1540,
+            closeZoneShootingVel = 1300;
 
     public static String fr = "frontRight";
     public static String br = "backRight";

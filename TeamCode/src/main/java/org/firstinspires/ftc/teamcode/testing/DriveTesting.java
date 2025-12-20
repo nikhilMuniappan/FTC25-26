@@ -27,7 +27,7 @@ public class DriveTesting extends TestingOpMode {
     public void runOpMode(){
         makeTelemetry();
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
-        mecaTank = new MecaTank(hardwareMap, telemetry);
+        //mecaTank = new MecaTank(hardwareMap, telemetry);
 
         mecaTank.init();
         ElapsedTime loopTimer = new ElapsedTime();

@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.subsystems;
 
+import static org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit.INCH;
+
 import androidx.annotation.NonNull;
 
 import com.acmerobotics.dashboard.FtcDashboard;
@@ -15,8 +17,9 @@ import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.GainCon
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Position;
+import org.firstinspires.ftc.robotcore.external.navigation.Quaternion;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
-import org.firstinspires.ftc.teamcode.Pose2d;
+import com.acmerobotics.roadrunner.Pose2d;
 import org.firstinspires.ftc.teamcode.RobotConstants;
 import org.firstinspires.ftc.teamcode.library.Subsystem;
 import org.firstinspires.ftc.vision.VisionPortal;
@@ -40,13 +43,11 @@ public class DecodeCAM extends Subsystem{
     OpenCvCamera camera;
     Telemetry telemetry;
     public String motif;
-    private static final Pose2d TAG_24_POSE = new Pose2d(-58.3727f, 55.6425f, Math.toRadians(55)); // Red Goal
-    private static final Pose2d TAG_20_POSE = new Pose2d(-58.3727f, -55.6425f, Math.toRadians(-55)); // Blue Goal
+    private static final Pose2d TAG_24_POSE = new Pose2d(-58.3727f, 55.6425f, Math.toRadians(0)); // Red Goal
+    private static final Pose2d TAG_20_POSE = new Pose2d(-58.3727f, -55.6425f, Math.toRadians(0)); // Blue Goal
 
-
-    // --- CAMERA OFFSET (MUST BE MEASURED) ---
-    private static final double CAMERA_X_OFFSET = 3.5;
-    private static final double CAMERA_Y_OFFSET = 2;
+    private static final double CAMERA_X_OFFSET = 0;//5;
+    private static final double CAMERA_Y_OFFSET = 0;//-3;
 
     public void init(android.content.Context appContext, com.qualcomm.robotcore.hardware.HardwareMap hardwareMap, Telemetry telemetry) {
         this.telemetry = telemetry;
@@ -54,7 +55,12 @@ public class DecodeCAM extends Subsystem{
             aprilTagProcessor = new AprilTagProcessor.Builder()
                     .setTagFamily(AprilTagProcessor.TagFamily.TAG_36h11)
                     .setTagLibrary(org.firstinspires.ftc.vision.apriltag.AprilTagGameDatabase.getCurrentGameTagLibrary())
-                    .setOutputUnits(DistanceUnit.INCH, AngleUnit.RADIANS)
+                    .setOutputUnits(INCH, AngleUnit.RADIANS)
+                    .setCameraPose(new Position(INCH, -2, 4, 0, 0), new YawPitchRollAngles(AngleUnit.DEGREES, 0, 0, 0, 0))
+                    .setDrawTagID(true)
+                    .setDrawTagOutline(true)
+                    .setDrawAxes(true)
+                    .setDrawCubeProjection(true)
                     .build();
 
             visionPortal = new VisionPortal.Builder()
@@ -72,6 +78,45 @@ public class DecodeCAM extends Subsystem{
 
     public Pose2d getAbsoluteRobotPose() {
         List<AprilTagDetection> currentDetections = aprilTagProcessor.getDetections();
+
+        if (currentDetections.isEmpty()) {
+            return null;
+        }
+
+        // Use the first valid detection
+        AprilTagDetection detection = currentDetections.get(0);
+
+        if (detection.metadata != null && detection.ftcPose != null) {
+
+            double tagFieldX = detection.metadata.fieldPosition.get(0);
+            double tagFieldY = detection.metadata.fieldPosition.get(1);
+
+            Quaternion q = detection.metadata.fieldOrientation;
+
+            double yawRad = Math.atan2(2.0 * (q.w * q.z + q.x * q.y), 1.0 - 2.0 * (q.y * q.y + q.z * q.z));
+            double tagHeadingDeg = Math.toDegrees(yawRad);
+
+            double headingRad = Math.toRadians(tagHeadingDeg);
+            double camX = detection.ftcPose.y;
+            double camY = -detection.ftcPose.x;
+
+            double rotatedX = camX * Math.cos(headingRad) - camY * Math.sin(headingRad);
+            double rotatedY = camX * Math.sin(headingRad) + camY * Math.cos(headingRad);
+
+
+            double robotX = detection.robotPose.getPosition().x; //tagFieldX - rotatedX;
+            double robotY = detection.robotPose.getPosition().y; //tagFieldY - rotatedY;
+
+            double robotHeadingDeg = tagHeadingDeg + 75 + detection.ftcPose.yaw;
+            telemetry.addData("Camera X, Y, Heading: ", "%.2f, %.2f, %.2f", robotX, robotY, robotHeadingDeg);
+            return new Pose2d(
+                    robotX,
+                    robotY,
+                    Math.toRadians(robotHeadingDeg)
+            );
+        }
+        return null;
+        /*List<AprilTagDetection> currentDetections = aprilTagProcessor.getDetections();
         AprilTagDetection visibleTag = null;
         Pose2d tagFieldPose = null;
 
@@ -93,8 +138,8 @@ public class DecodeCAM extends Subsystem{
             return null;
         }
 
-        double camRelTagX = -visibleTag.ftcPose.x;
-        double camRelTagY = -visibleTag.ftcPose.y;
+        double camRelTagX = visibleTag.ftcPose.x;
+        double camRelTagY = visibleTag.ftcPose.y;
         double camRelTagYaw_deg = visibleTag.ftcPose.yaw;
 
         double camFieldHeading_rad = AngleUnit.normalizeRadians(
@@ -109,13 +154,14 @@ public class DecodeCAM extends Subsystem{
         double robotRelCamX_field = CAMERA_X_OFFSET * Math.cos(robotFieldHeading_rad) - CAMERA_Y_OFFSET * Math.sin(robotFieldHeading_rad);
         double robotRelCamY_field = CAMERA_X_OFFSET * Math.sin(robotFieldHeading_rad) + CAMERA_Y_OFFSET * Math.cos(robotFieldHeading_rad);
 
-        double robotFieldX = camFieldX - robotRelCamX_field;
-        double robotFieldY = camFieldY - robotRelCamY_field;
+        double robotFieldX = camFieldX - robotRelCamX_field; //+ 60;
+        double robotFieldY = camFieldY - robotRelCamY_field; //- 15;
 
         telemetry.addData("Pose from Tag", String.format("ID %d -> (%.1f, %.1f, %.1f°)",
                 visibleTag.id, robotFieldX, robotFieldY, Math.toDegrees(robotFieldHeading_rad)));
 
         return new Pose2d(robotFieldX, robotFieldY, robotFieldHeading_rad);
+         */
     }
     public String getMotif() {
         if (aprilTagProcessor == null) return "Not Initialized";
@@ -133,7 +179,6 @@ public class DecodeCAM extends Subsystem{
         }
         return "Unknown Motif";
     }
-
 
     public void getGoalTagData() {
 
