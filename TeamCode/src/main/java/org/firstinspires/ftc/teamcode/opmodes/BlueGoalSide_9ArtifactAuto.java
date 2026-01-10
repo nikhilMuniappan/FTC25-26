@@ -12,9 +12,10 @@ import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.VelConstraint;
 import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 
 import org.firstinspires.ftc.teamcode.DECODERobotConstants;
-
+@Disabled
 @Autonomous
 public class BlueGoalSide_9ArtifactAuto extends NGAutoOpMode {
     @Override

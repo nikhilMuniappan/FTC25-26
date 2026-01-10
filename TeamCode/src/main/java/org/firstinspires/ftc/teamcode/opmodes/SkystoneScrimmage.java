@@ -8,6 +8,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 @TeleOp
+@Disabled
 public class SkystoneScrimmage extends LinearOpMode { // SSR = Sky Stone Robot // ALSO HAS THE CLAW CODE BUILT IN
 
     // Drive Train Motor //

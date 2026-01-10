@@ -4,10 +4,13 @@ import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
+import org.firstinspires.ftc.teamcode.roadrunner.PoseStorage;
 import org.firstinspires.ftc.teamcode.subsystems.DecodeCAM;
 import com.acmerobotics.roadrunner.Pose2d;
 
@@ -23,9 +26,10 @@ public class ATeleOp_FusedControl extends LinearOpMode{
     MecaTank mecaTank;
     private DecodeCAM camera;
     ElapsedTime timer;
-    private DcMotor rollers;
+    private DcMotorEx rollers;
     private NGMotor flywheels;
-    private DcMotor transferRollers;
+    private DcMotorEx transferRollers;
+    private DcMotorEx interTransfer;
     private Servo hoodAdjuster;
 
     private enum Alliance {
@@ -47,18 +51,31 @@ public class ATeleOp_FusedControl extends LinearOpMode{
 
         timer = new ElapsedTime();
 
-        rollers = hardwareMap.get(DcMotor.class, DECODERobotConstants.rollers);
-        transferRollers = hardwareMap.get(DcMotor.class, DECODERobotConstants.transferRollers);
+        rollers = hardwareMap.get(DcMotorEx.class, DECODERobotConstants.rollers);
+        interTransfer = hardwareMap.get(DcMotorEx.class, DECODERobotConstants.interTransfer);
+        transferRollers = hardwareMap.get(DcMotorEx.class, DECODERobotConstants.transferRollers);
         flywheels = new NGMotor(hardwareMap, telemetry, DECODERobotConstants.flywheels);
         hoodAdjuster = hardwareMap.get(Servo.class, DECODERobotConstants.hoodAdjuster);
+
         mecaTank = new MecaTank(hardwareMap, telemetry, timer);
+
         camera = new DecodeCAM();
+
         Pose2d startPose = null;
-        if(currentAlliance == Alliance.BLUE) {
-            startPose = new Pose2d(5, -10, Math.toRadians(55));
-        }else if(currentAlliance == Alliance.RED){
-            startPose = new Pose2d(5, 10, Math.toRadians(55));
+        if(PoseStorage.getLastBluePose() != null || PoseStorage.getLastRedPose() != null){
+            if(currentAlliance == Alliance.BLUE) {
+            startPose = PoseStorage.getLastBluePose(); //new Pose2d(5, -10, Math.toRadians(55));
+            }else if(currentAlliance == Alliance.RED){
+            startPose = PoseStorage.getLastRedPose(); //new Pose2d(5, 10, Math.toRadians(55));
+            }
+        }else{
+            if(currentAlliance == Alliance.BLUE) {
+                startPose = new Pose2d(5, -10, Math.toRadians(55));
+            }else if(currentAlliance == Alliance.RED){
+                startPose = new Pose2d(5, 10, Math.toRadians(55));
+            }
         }
+
         mecaTank = new MecaTank(hardwareMap, telemetry, startPose);
 
         camera.init(hardwareMap.appContext, hardwareMap, telemetry);
@@ -69,7 +86,10 @@ public class ATeleOp_FusedControl extends LinearOpMode{
         flywheels.setZeroPowerBehavior_Brake();
 
         rollers.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        interTransfer.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         transferRollers.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        interTransfer.setDirection(DcMotorSimple.Direction.REVERSE);
 
         hoodAdjuster.setPosition(DECODERobotConstants.hoodStartPos);
 
@@ -111,9 +131,39 @@ public class ATeleOp_FusedControl extends LinearOpMode{
             Pose2d absoluteCameraPose = camera.getAbsoluteRobotPose();
 
             if (absoluteCameraPose != null) {
-                mecaTank.setPoseEstimate(absoluteCameraPose);
-                poseAcquired = true;
+                Pose2d currentRRPose = mecaTank.getPoseEstimate();
+
+                //Distance between Dead Wheels and Camera
+                double difference = Math.hypot(
+                        absoluteCameraPose.position.x - currentRRPose.position.x,
+                        absoluteCameraPose.position.y - currentRRPose.position.y
+                );
+
+                if (difference > 1.35) {
+                    Pose2d smoothPose = new Pose2d(
+                            absoluteCameraPose.position.x,
+                            absoluteCameraPose.position.y,
+                            currentRRPose.heading.toDouble() // Trust Dead Wheel Rotation
+                    );
+
+                    mecaTank.setPoseEstimate(smoothPose);
+                    hasCalibrated = true;
+                }
+                /*double smoothHeading = mecaTank.getPoseEstimate().heading.toDouble();
+
+                // 2. Create a "Hybrid" Pose
+                // Use Camera for Location (X, Y)
+                // Use Dead Wheels for Rotation (Heading)
+                Pose2d hybridPose = new Pose2d(
+                        absoluteCameraPose.position.x,
+                        absoluteCameraPose.position.y,
+                        smoothHeading // Ignore camera heading!
+                );
+
+                // 3. Update Road Runner
+                mecaTank.setPoseEstimate(hybridPose);
                 telemetry.addLine("POSE ACQUIRED from Camera. Full Control Ready.");
+                poseAcquired = true;*/
             } else {
                 mecaTank.updateAutoAlign();
                 telemetry.addLine("Seeking Pose... Move robot slightly to acquire AprilTag.");
@@ -139,8 +189,8 @@ public class ATeleOp_FusedControl extends LinearOpMode{
                 }
             }
 
-            double rawStrafe = gamepad1.left_stick_x;
-            double rawForward = -gamepad1.left_stick_y;
+            double rawStrafe = -gamepad1.right_stick_x;
+            double rawForward = -gamepad1.right_stick_y;
             double manualTurnInput = gamepad1.right_stick_x;
 
             double strafeInput = (Math.abs(rawStrafe) > 0.05) ? rawStrafe : 0.0;
@@ -186,27 +236,26 @@ public class ATeleOp_FusedControl extends LinearOpMode{
                     telemetry.addData("Pose Status", "Coasting on Odometry (Full)");
                 }*/
                 mecaTank.setDrivePowers(gamepad1.left_stick_y, gamepad1.right_stick_y, gamepad1.left_trigger, gamepad1.right_trigger);
-
             }
 
             boolean PosOverride = (Math.abs(gamepad1.right_stick_y) > 0.1 || Math.abs(gamepad1.left_stick_y) > 0.1);
             //Automated Base Parking
-            if(gamepad1.b){
+            /*if(gamepad1.b){
                 if(currentAlliance == Alliance.BLUE) {
-                    mecaTank.moveToPositionBlocking(this, 37, 33, 90, 0.6, 4, PosOverride);
+                    mecaTank.moveToPositionBlocking(this, 30, 32, 90, 30, 4, PosOverride);
                 }else if(currentAlliance == Alliance.RED){
-                    mecaTank.moveToPositionBlocking(this, 37, -33, -90, 0.6, 4, PosOverride);
+                    mecaTank.moveToPositionBlocking(this, 30, -32, -90, 30, 4, PosOverride);
                 }
             }
 
             //Automated far shooting position
             if(gamepad1.x){
                 if(currentAlliance == Alliance.BLUE) {
-                    mecaTank.moveToPositionBlocking(this, 54, -10, 35, 0.6, 4, PosOverride);
+                    mecaTank.moveToPositionBlocking(this, 54, -10, 35, 25, 4, PosOverride);
                 }else if(currentAlliance == Alliance.RED){
-                    mecaTank.moveToPositionBlocking(this, 54, 10, -35, 0.6, 4, PosOverride);
+                    mecaTank.moveToPositionBlocking(this, 54, 10, -35, 25, 4, PosOverride);
                 }
-            }
+            }*/
 
             if (!hasCalibrated) telemetry.addData("Status", "NOT CALIBRATED (Drive to see Tag)");
             else telemetry.addData("Status", "CALIBRATED");
@@ -216,13 +265,16 @@ public class ATeleOp_FusedControl extends LinearOpMode{
                     currentPose.position.y,
                     Math.toDegrees(currentPose.heading.toDouble()));
             telemetry.update();
-
+            flywheels.getCurrent();
             if(gamepad2.a){
                 rollers.setPower(1.0);
+                interTransfer.setPower(0.85);
                 transferRollers.setPower(0);
             }else if(gamepad2.b){
                 rollers.setPower(0);
+                interTransfer.setPower(0);
             }
+
             if(gamepad2.y){
                 resetOuttake();
                 flywheelsActive = false;
@@ -256,11 +308,12 @@ public class ATeleOp_FusedControl extends LinearOpMode{
             hoodPos = Range.clip(hoodPos, 0, 1);
 
             hoodAdjuster.setPosition(hoodPos);
+
+            telemetry.addData("Intake current: ", rollers.getCurrent(CurrentUnit.MILLIAMPS));
+            telemetry.addData("interTransfer Current: ", interTransfer.getCurrent(CurrentUnit.MILLIAMPS));
+            telemetry.addData("Transfer Current: ", transferRollers.getCurrent(CurrentUnit.MILLIAMPS));
             telemetry.update();
         }
-    }
-    private double sameSignSqrt(double number) {
-        return Math.copySign(Math.sqrt(Math.abs(number)), number);
     }
     private void prepShooter(double vel){
         flywheels.setCustomVelocityPID(vel, 0.008, 0.015, 0.0001, 0.000426);
@@ -272,11 +325,13 @@ public class ATeleOp_FusedControl extends LinearOpMode{
     }
     private void transferArtifacts(){
         rollers.setPower(1.0);
-        transferRollers.setPower(0.8);
+        interTransfer.setPower(1.0);
+        transferRollers.setPower(1.0); //0.8 before
         telemetry.update();
     }
     private void resetOuttake(){
         rollers.setPower(0);
         transferRollers.setPower(0);
+        interTransfer.setPower(0);
     }
 }

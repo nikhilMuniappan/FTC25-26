@@ -4,9 +4,12 @@ import static org.firstinspires.ftc.teamcode.roadrunner.MecanumDrive.PARAMS;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.Action;
+import com.acmerobotics.roadrunner.MecanumKinematics;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.Rotation2d;
+import com.acmerobotics.roadrunner.TranslationalVelConstraint;
+import com.acmerobotics.roadrunner.TurnConstraints;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Encoder;
 import com.acmerobotics.roadrunner.ftc.LazyImu;
@@ -88,7 +91,7 @@ public class MecaTank extends Subsystem {
     private static final double HEADING_KS = 0.8701732592256377;
     private static final double DRIVE_KP = 0.008;   //Power per inch of error
     private static final double STRAFE_KP = 0.11;
-    private static final double MAX_TURN_POWER = 0.7;
+    private static final double MAX_TURN_POWER = 0.85;
     private int prevParallelTicks = 0; //Tracks Forward/Backward
     private int prevPerpTicks = 0;     //Tracks Strafing
     private double prevImuHeadingRad = 0.0; //Tracks Heading
@@ -127,7 +130,7 @@ public class MecaTank extends Subsystem {
     }
 
     public void updateAutoAlign() {
-        drive.updatePoseEstimate();
+        updatePoseEstimate();
         telemetry.addData("Deadwheel Pose: ", "%.2f, %.2f", drive.pose.position.x, drive.pose.position.y);
         /*int currentParallelTicks = backLeft.getCurrentPosition();
         int currentPerpTicks = backRight.getCurrentPosition();
@@ -166,6 +169,17 @@ public class MecaTank extends Subsystem {
     public Pose2d getPoseEstimate() {
         return drive.pose;
     }
+    private PoseVelocity2d currentVelocity = new PoseVelocity2d(new Vector2d(0, 0), 0);
+    public void updatePoseEstimate() {
+        currentVelocity = drive.updatePoseEstimate();
+    }
+
+    public double getRobotVelocity() {
+        if (currentVelocity == null || currentVelocity.linearVel == null) return 0.0;
+
+        return currentVelocity.linearVel.norm();
+    }
+
     public void driveFieldCentric(double strafe, double forward, double turn, double currentHeading) {
         double heading = drive.pose.heading.toDouble();
 
@@ -233,7 +247,7 @@ public class MecaTank extends Subsystem {
         while (error > 180)  error -= 360;
         while (error <= -180) error += 360;
 
-        double turnPower = error * 0.02;
+        double turnPower = error * 0.015; //Multiply error by kP
         return Math.max(-MAX_TURN_POWER, Math.min(turnPower, MAX_TURN_POWER));
 
         /*double headingError = AngleUnit.DEGREES.normalize(targetHeading - currentHeading);
@@ -264,11 +278,11 @@ public class MecaTank extends Subsystem {
         backLeft.setPower(lbPower); backRight.setPower(rbPower);*/
     }
 
-    public void moveToPositionBlocking(LinearOpMode opMode, double targetX, double targetY, double targetHeadingDeg, double maxSpeed, double timeoutSec, boolean manualOverride) {
+    public void moveToAngleBlocking(LinearOpMode opMode, Pose2d pose, double targetHeadingDeg, double angVel, double timeoutSec, boolean manualOverride) {
         double targetHeadingRad = Math.toRadians(targetHeadingDeg);
 
-        Action moveAction = drive.actionBuilder(drive.pose)
-                .strafeToLinearHeading(new Vector2d(targetX, targetY), targetHeadingRad)
+        Action moveAction = drive.actionBuilder(pose)
+                .turnTo(targetHeadingRad, new TurnConstraints(angVel, 60, 80))
                 .build();
 
         ElapsedTime moveTimer = new ElapsedTime();
@@ -279,8 +293,25 @@ public class MecaTank extends Subsystem {
 
         while (active && opMode.opModeIsActive() && moveTimer.seconds() < timeoutSec && !manualOverride) {
             active = moveAction.run(packet);
+        }
 
-            if (Math.abs(opMode.gamepad1.left_stick_x) > 0.1) manualOverride = true;
+        drive.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
+    }
+    public void moveToPositionBlocking(LinearOpMode opMode, Pose2d pose, double targetX, double targetY, double targetHeadingDeg, double transVel, double timeoutSec, boolean manualOverride) {
+        double targetHeadingRad = Math.toRadians(targetHeadingDeg);
+
+        Action moveAction = drive.actionBuilder(pose)
+                .strafeToLinearHeading(new Vector2d(targetX, targetY), targetHeadingRad, new TranslationalVelConstraint(transVel))
+                .build();
+
+        ElapsedTime moveTimer = new ElapsedTime();
+
+        boolean active = true;
+
+        com.acmerobotics.dashboard.telemetry.TelemetryPacket packet = new com.acmerobotics.dashboard.telemetry.TelemetryPacket();
+
+        while (active && opMode.opModeIsActive() && moveTimer.seconds() < timeoutSec && !manualOverride) {
+            active = moveAction.run(packet);
         }
 
         drive.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));

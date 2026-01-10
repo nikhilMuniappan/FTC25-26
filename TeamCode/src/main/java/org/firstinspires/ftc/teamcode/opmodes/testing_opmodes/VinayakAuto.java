@@ -1,12 +1,13 @@
 package org.firstinspires.ftc.teamcode.opmodes.testing_opmodes;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 
 import org.firstinspires.ftc.teamcode.library.NGMotor;
 
-
+@Disabled
 @Autonomous(name="Auto", group="Autonomous")
 public class VinayakAuto extends LinearOpMode {
 

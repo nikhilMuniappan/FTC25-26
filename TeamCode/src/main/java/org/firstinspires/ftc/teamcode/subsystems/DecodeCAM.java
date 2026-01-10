@@ -46,8 +46,6 @@ public class DecodeCAM extends Subsystem{
     private static final Pose2d TAG_24_POSE = new Pose2d(-58.3727f, 55.6425f, Math.toRadians(0)); // Red Goal
     private static final Pose2d TAG_20_POSE = new Pose2d(-58.3727f, -55.6425f, Math.toRadians(0)); // Blue Goal
 
-    private static final double CAMERA_X_OFFSET = 0;//5;
-    private static final double CAMERA_Y_OFFSET = 0;//-3;
 
     public void init(android.content.Context appContext, com.qualcomm.robotcore.hardware.HardwareMap hardwareMap, Telemetry telemetry) {
         this.telemetry = telemetry;
@@ -56,7 +54,7 @@ public class DecodeCAM extends Subsystem{
                     .setTagFamily(AprilTagProcessor.TagFamily.TAG_36h11)
                     .setTagLibrary(org.firstinspires.ftc.vision.apriltag.AprilTagGameDatabase.getCurrentGameTagLibrary())
                     .setOutputUnits(INCH, AngleUnit.RADIANS)
-                    .setCameraPose(new Position(INCH, -2, 4, 0, 0), new YawPitchRollAngles(AngleUnit.DEGREES, 0, 0, 0, 0))
+                    .setCameraPose(new Position(INCH, 0, 5, 4, 0), new YawPitchRollAngles(AngleUnit.DEGREES, 0, 43.3, 0, 0))
                     .setDrawTagID(true)
                     .setDrawTagOutline(true)
                     .setDrawAxes(true)
@@ -103,11 +101,10 @@ public class DecodeCAM extends Subsystem{
             double rotatedX = camX * Math.cos(headingRad) - camY * Math.sin(headingRad);
             double rotatedY = camX * Math.sin(headingRad) + camY * Math.cos(headingRad);
 
-
             double robotX = detection.robotPose.getPosition().x; //tagFieldX - rotatedX;
             double robotY = detection.robotPose.getPosition().y; //tagFieldY - rotatedY;
 
-            double robotHeadingDeg = tagHeadingDeg + 75 + detection.ftcPose.yaw;
+            double robotHeadingDeg = tagHeadingDeg + 90 + detection.ftcPose.yaw;
             telemetry.addData("Camera X, Y, Heading: ", "%.2f, %.2f, %.2f", robotX, robotY, robotHeadingDeg);
             return new Pose2d(
                     robotX,

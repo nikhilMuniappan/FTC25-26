@@ -1,4 +1,5 @@
 package org.firstinspires.ftc.teamcode.opmodes;
+
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.hardware.Servo;
@@ -7,7 +8,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 
 import org.firstinspires.ftc.teamcode.DECODERobotConstants;
 import org.firstinspires.ftc.teamcode.library.NGMotor;
-
+@Disabled
 @Autonomous
 public class AutoSimple extends LinearOpMode{
     private DcMotor RightFront;

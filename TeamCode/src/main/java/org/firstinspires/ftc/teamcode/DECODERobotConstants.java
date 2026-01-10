@@ -9,10 +9,10 @@ public class DECODERobotConstants {
     public static double
             hoodStartPos = 1.0,
             closeShootPos = 1.0,
-            farShootPos = 0.85,
+            farShootPos = 0.75,
             //farShootingVel = 1300,
-            farZoneShootingVel = 1540,
-            closeZoneShootingVel = 1300;
+            farZoneShootingVel = 1590,
+            closeZoneShootingVel = 1340;
 
     public static String fr = "frontRight";
     public static String br = "backRight";
@@ -24,6 +24,7 @@ public class DECODERobotConstants {
     public static Pose2d pose = new Pose2d(0,0,0);
     public static String rollers = "rollers";
     public static String transferRollers = "transferRollers";
+    public static String interTransfer = "interTransfer";
     public static String flywheels = "flywheels";
     public static String hoodAdjuster = "hoodAdjuster";
     public static boolean flywheelsActive = true;

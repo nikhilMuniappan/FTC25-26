@@ -1,12 +1,13 @@
 package org.firstinspires.ftc.teamcode.opmodes;
 
 import com.acmerobotics.dashboard.config.Config;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
-
+@Disabled
 @Config
 @TeleOp
 public class BTeleOp extends LinearOpMode {
@@ -30,7 +31,9 @@ public class BTeleOp extends LinearOpMode {
         Arm = hardwareMap.get(DcMotor.class, "Arm");
         claw = hardwareMap.get(Servo.class, "claw");
         rigging=hardwareMap.get(DcMotor.class, "rigging");
+
         waitForStart();
+
         while (!isStopRequested() && opModeIsActive()) {
             FrontLeft.setPower(gamepad1.left_stick_y);
             BackLeft.setPower(gamepad1.left_stick_y);

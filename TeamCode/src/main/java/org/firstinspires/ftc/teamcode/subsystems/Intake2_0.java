@@ -36,6 +36,8 @@ public class Intake2_0 {
     public static NGMotor flywheels;
     public static Servo hoodAdjuster;
     public NGMotor transferRollers;
+    public NGMotor interTransfer;
+    public boolean autoFinished = false;
 
     public Intake2_0(HardwareMap hardwareMap, Telemetry telemetry){
         this.hardwareMap = hardwareMap;
@@ -44,6 +46,8 @@ public class Intake2_0 {
         rollers = new NGMotor(hardwareMap, telemetry, DECODERobotConstants.rollers);
         flywheels = new NGMotor(hardwareMap, telemetry, DECODERobotConstants.flywheels);
         transferRollers = new NGMotor(hardwareMap, telemetry, DECODERobotConstants.transferRollers);
+        interTransfer = new NGMotor(hardwareMap, telemetry, DECODERobotConstants.interTransfer);
+        interTransfer.setDirection(DcMotor.Direction.REVERSE);
         flywheels.init();
         flywheels.setZeroPowerBehavior_Brake();
         transferRollers.setDirection(DcMotor.Direction.REVERSE);
@@ -54,26 +58,41 @@ public class Intake2_0 {
         this.timer = timer;
     }
 
+    public void setAutoFinished(){
+        autoFinished = true;
+    }
+    public boolean isAutoFinished(){
+        return autoFinished;
+    }
+
+    public Action setFinished() { return new InstantAction(() -> setAutoFinished()); }
+
+    public Action isFinished() { return new InstantAction(() -> isAutoFinished());}
+
     public void runRollers(double power){
         rollers.setPower(power);
+        interTransfer.setPower(power);
     }
     public void stopRollers(){
         rollers.setPower(0);
+        interTransfer.setPower(0);
     }
     public void runFlywheels(double vel){
-        flywheels.setCustomVelocityPID(vel, 0.008, 0.015, 0.0001, 0.000426);
+        flywheels.setCustomVelocityPID(vel, 0.0085, 0.015, 0.0001, 0.000426);
     }
     public void stopFlywheels(){
-        flywheels.setCustomVelocityPID(0, 0.008, 0.015, 0.0001, 0.000426);
+        flywheels.setCustomVelocityPID(0, 0.0085, 0.015, 0.0001, 0.000426);
     }
     public static void initFlywheels(){
-        flywheels.setCustomVelocityPID(0, 0.008, 0.015, 0.0001, 0.000426);
+        flywheels.setCustomVelocityPID(0, 0.0085, 0.015, 0.0001, 0.000426);
     }
     public void runTransferRollers(double power){
         transferRollers.setPower(power);
+        interTransfer.setPower(power);
     }
     public void stopTransferRollers(){
         transferRollers.setPower(0);
+        interTransfer.setPower(0);
     }
     public void hoodAdjusterToPos(double position){
         hoodAdjuster.setPosition(position);
@@ -168,7 +187,7 @@ public class Intake2_0 {
     }
     public Action transferUsingRollersForTime(double time, double p){
         return new SequentialAction(
-                        new InstantAction(() -> runTransferRollers(1.0)),
+                        new InstantAction(() -> runTransferRollers(p)),
                         new InstantAction(() -> runRollers(p)),
                         new SleepAction(time),
                         new InstantAction(() -> stopTransferRollers()),
