@@ -1,12 +1,18 @@
 package com.example.meepmeeptesting;
 
 import com.acmerobotics.roadrunner.AccelConstraint;
+import com.acmerobotics.roadrunner.Arclength;
+import com.acmerobotics.roadrunner.CompositeVelConstraint;
 import com.acmerobotics.roadrunner.InstantAction;
 import com.acmerobotics.roadrunner.MinMax;
+import com.acmerobotics.roadrunner.MinVelConstraint;
 import com.acmerobotics.roadrunner.NullAction;
 import com.acmerobotics.roadrunner.Pose2d;
+import com.acmerobotics.roadrunner.Pose2dDual;
+import com.acmerobotics.roadrunner.PosePath;
 import com.acmerobotics.roadrunner.ProfileAccelConstraint;
 import com.acmerobotics.roadrunner.SleepAction;
+import com.acmerobotics.roadrunner.Trajectory;
 import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
 import com.acmerobotics.roadrunner.TrajectoryBuilder;
 import com.acmerobotics.roadrunner.TranslationalVelConstraint;
@@ -20,7 +26,7 @@ import com.noahbres.meepmeep.roadrunner.entity.RoadRunnerBotEntity;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.Color;
-public class MeepMeepTestingNikhil {
+public class  MeepMeepTestingNikhil {
     public static void main(String[] args) {
         MeepMeep meepMeep = new MeepMeep(800);
 
@@ -215,19 +221,15 @@ public class MeepMeepTestingNikhil {
                 })
                 .build();
         AccelConstraint highMode = (robotPose, _path, _disp) -> {
-            if (robotPose.position.y.value() < -20.0) {
                 return new MinMax(-10,50);
-            } else {
-                return new MinMax(-30,50);
-            }
         };
         Pose2d basket = new Pose2d(-55, -55, Math.toRadians(45));
 
         AccelConstraint smartScore = (robotPose, _path, _disp) -> {
-            if (robotPose.position.y.value() < -32.0) {
-                return new MinMax(-20,80);
+            if (robotPose.position.x.value() < -30.0) {
+                return new MinMax(-5,5);
             } else {
-                return new MinMax(-30,80);
+                return new MinMax(-120,120);
             }
         };
         AccelConstraint intakeAccel = (robotPose, _path, _disp) -> {
@@ -293,17 +295,86 @@ public class MeepMeepTestingNikhil {
                 .strafeToSplineHeading(new Vector2d(-50, -36), Math.toRadians(55), new TranslationalVelConstraint(80))
                 .build())
 */
-        sampleBot.runAction(sampleBot.getDrive().actionBuilder(new Pose2d(61, -13, Math.toRadians(180)))
-                //.strafeToSplineHeading(new Vector2d(-22, -5), Math.toRadians(55), new TranslationalVelConstraint(50))
-                //.splineToLinearHeading(new Pose2d(35, -24, Math.toRadians(90)), Math.toRadians(3), new TranslationalVelConstraint(50))
-                /*.splineToConstantHeading(new Vector2d(-4, -43.5), Math.toRadians(-90))
-                        .lineToY(-56)*/
-                //.splineToLinearHeading(new Pose2d(11, 17, Math.toRadians(-90)), Math.toRadians(-20), new TranslationalVelConstraint(40))
-                        .lineToXLinearHeading(53, 205)
-                        .strafeToConstantHeading(new Vector2d(25, -13))
+        sampleBot.runAction(sampleBot.getDrive().actionBuilder(new Pose2d(-52, -48 , Math.toRadians(235)))
+
+                .lineToY(-25, new TranslationalVelConstraint(80), new ProfileAccelConstraint(-150, 150))
+                        .waitSeconds(1)
+                        .splineToSplineHeading(new Pose2d(-15, -21, Math.toRadians(270)), Math.toRadians(5), new TranslationalVelConstraint(70), new ProfileAccelConstraint(-60, 60))
+                        .splineToLinearHeading(new Pose2d(-12, -48.5, Math.toRadians(270)), Math.toRadians(-100), new TranslationalVelConstraint(60), new ProfileAccelConstraint(-20, 30))
+                        .splineToSplineHeading(new Pose2d(-32, -30, Math.toRadians(230)), Math.toRadians(100), new TranslationalVelConstraint(100), new ProfileAccelConstraint(-80, 80))
+                            .waitSeconds(1)
+
+                        .splineToLinearHeading(new Pose2d(13.2, -17, Math.toRadians(270)), Math.toRadians(-20), new TranslationalVelConstraint(100), new ProfileAccelConstraint(-120, 120))
+                        .splineToSplineHeading(new Pose2d(13.2, -50, Math.toRadians(270)), Math.toRadians(-60), new TranslationalVelConstraint(40))
+
+                        .splineToSplineHeading(new Pose2d(-32, -30, Math.toRadians(230)), Math.toRadians(-180), new TranslationalVelConstraint(100))
+                            .waitSeconds(1)
+
+                        .splineToLinearHeading(new Pose2d(10, -58, Math.toRadians(240)), Math.toRadians(-120), new TranslationalVelConstraint(55))
+                            .waitSeconds(1.8)
+                        .splineToSplineHeading(new Pose2d(10, -40, Math.toRadians(230)), Math.toRadians(90), new TranslationalVelConstraint(100))
+                        .splineToSplineHeading(new Pose2d(-45, -25, Math.toRadians(225)), Math.toRadians(-150), new TranslationalVelConstraint(100), smartScore)
+                            //.waitSeconds(1)
+
+                        .splineToLinearHeading(new Pose2d(10, -58, Math.toRadians(240)), Math.toRadians(-120), new TranslationalVelConstraint(55), smartScore)
+                            .waitSeconds(1.8)
+                        .splineToSplineHeading(new Pose2d(10, -40, Math.toRadians(230)), Math.toRadians(90), new TranslationalVelConstraint(100))
+                        .splineToSplineHeading(new Pose2d(-45, -25, Math.toRadians(225)), Math.toRadians(-150), new TranslationalVelConstraint(100), smartScore)
+                        //.waitSeconds(1)
+                        .splineToLinearHeading(new Pose2d(10, -58, Math.toRadians(240)), Math.toRadians(-120), new TranslationalVelConstraint(55), smartScore)
+                            .waitSeconds(1.8)
+                        //.strafeToConstantHeading(new Vector2d(10, -36), new TranslationalVelConstraint(140))
+                        .splineToSplineHeading(new Pose2d(10, -40, Math.toRadians(230)), Math.toRadians(90), new TranslationalVelConstraint(100))
+                        .splineToSplineHeading(new Pose2d(-45, -25, Math.toRadians(225)), Math.toRadians(-155), new TranslationalVelConstraint(100), new ProfileAccelConstraint(-120, 120))
+                        //.waitSeconds(1)
+                        //.splineToLinearHeading(new Pose2d(34, -15, Math.toRadians(270)), Math.toRadians(20), new TranslationalVelConstraint(100))
+                        //.splineToSplineHeading(new Pose2d(34, -50, Math.toRadians(270)), Math.toRadians(50), new TranslationalVelConstraint(40))
+                        //.splineToSplineHeading(new Pose2d(-32, -30, Math.toRadians(230)), Math.toRadians(-50), new TranslationalVelConstraint(100))
+                .build());
+
+        sampleBot2.runAction(sampleBot2.getDrive().actionBuilder(new Pose2d(60, -12, Math.toRadians(180)))
+                        .lineToXLinearHeading(52, Math.toRadians(212))
+                        .waitSeconds(2)
+                .splineToSplineHeading(new Pose2d(35, -25, Math.toRadians(-90)), Math.toRadians(5), new TranslationalVelConstraint(90), new ProfileAccelConstraint(-40, 50))
+                .splineToLinearHeading(new Pose2d(35, -51, Math.toRadians(-90)), Math.toRadians(70), new TranslationalVelConstraint(42), new ProfileAccelConstraint(-10, 20))
+                .splineToSplineHeading(new Pose2d(52, -12, Math.toRadians(212)), Math.toRadians(90), new TranslationalVelConstraint(70), new ProfileAccelConstraint(-60, 70))
+                        .waitSeconds(2)
+                .strafeToSplineHeading(
+                        new Vector2d(52, -35),
+                        Math.toRadians(-90),
+                        new TranslationalVelConstraint(100),
+                        new ProfileAccelConstraint(-90, 90)
+                )
+
+                .splineToLinearHeading(
+                        new Pose2d(56, -58,
+                        Math.toRadians(-90)),
+                        Math.toRadians(120),
+                        new TranslationalVelConstraint(50),
+                        new ProfileAccelConstraint(-20, 20)
+                )
+                        .splineToSplineHeading(new Pose2d(52, -12, Math.toRadians(212)), Math.toRadians(5), new TranslationalVelConstraint(70), new ProfileAccelConstraint(-60, 70))
+                        .waitSeconds(2)
+                .strafeToSplineHeading(
+                        new Vector2d(52, -35),
+                        Math.toRadians(-90),
+                        new TranslationalVelConstraint(100),
+                        new ProfileAccelConstraint(-90, 90)
+                )
+
+                .splineToLinearHeading(
+                        new Pose2d(56, -58,
+                                Math.toRadians(-90)),
+                        Math.toRadians(120),
+                        new TranslationalVelConstraint(50),
+                        new ProfileAccelConstraint(-20, 20)
+                )
+                .splineToSplineHeading(new Pose2d(52, -12, Math.toRadians(212)), Math.toRadians(5), new TranslationalVelConstraint(70), new ProfileAccelConstraint(-60, 70))
+
                 .build());
 
         meepMeep.setBackground(MeepMeep.Background.FIELD_DECODE_OFFICIAL)
+                .addEntity(sampleBot2)
                 .setDarkMode(true)
                 .setBackgroundAlpha(0.95f)
                 .addEntity(sampleBot)

@@ -53,7 +53,7 @@ public class FlywheelPIDTesting extends LinearOpMode{
         waitForStart();
 
         while (!isStopRequested() && opModeIsActive()) {
-            flywheels.updateFlywheels();
+            flywheels.updateFlywheels(gamepad2.right_trigger > 0.1);
 
             if(gamepad2.dpad_right){
                 flywheels.setCustomVelocityPID(1400, 0.0006, 0.0009, 0.000085, 0.000471);

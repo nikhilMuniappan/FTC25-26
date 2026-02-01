@@ -24,7 +24,10 @@ public class BlueGoalSide_12ArtifactAuto extends NGAutoOpMode{
     @Override
     public void runOpMode() throws InterruptedException {
         PoseStorage.resetPose();
-
+/*TrajectoryActionBuilder PathToGate = collectFirstSet.endTrajectory().fresh()
+                .splineToConstantHeading(new Vector2d(-7, -44.5), Math.toRadians(270))
+                .lineToY(-56, new TranslationalVelConstraint(12));
+                    new SleepAction(2);*/
         Pose2d beginPose = new Pose2d(-52, -48 , Math.toRadians(235));
         initAuto(beginPose);
 
@@ -34,10 +37,7 @@ public class BlueGoalSide_12ArtifactAuto extends NGAutoOpMode{
                 .strafeToLinearHeading(new Vector2d(-12, -21), Math.toRadians(270));
         TrajectoryActionBuilder collectFirstSet = drive.actionBuilder(new Pose2d(-12, -21, Math.toRadians(270)))
                 .lineToY(-47.5, new TranslationalVelConstraint(42));
-        /*TrajectoryActionBuilder PathToGate = collectFirstSet.endTrajectory().fresh()
-                .splineToConstantHeading(new Vector2d(-7, -44.5), Math.toRadians(270))
-                .lineToY(-56, new TranslationalVelConstraint(12));
-                    new SleepAction(2);*/
+
         TrajectoryActionBuilder PathToGoal = collectFirstSet.endTrajectory().fresh()
                 .strafeToSplineHeading(new Vector2d(-25, -8), Math.toRadians(235), new TranslationalVelConstraint(50));
         TrajectoryActionBuilder PathToSecondSet = PathToGoal.endTrajectory().fresh()

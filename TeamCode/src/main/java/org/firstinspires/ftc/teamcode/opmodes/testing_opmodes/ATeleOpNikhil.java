@@ -62,7 +62,7 @@ public class ATeleOpNikhil extends LinearOpMode{
         waitForStart();
 
         while (!isStopRequested() && opModeIsActive()) {
-            flywheels.updateFlywheels();
+            flywheels.updateFlywheels(gamepad2.right_trigger > 0.1);
             boolean hoodUp = gamepad2.dpad_up;
             boolean hoodDown = gamepad2.dpad_down;
             telemetry.addData("hoodAdjuster Position: ", hoodAdjuster.getPosition());

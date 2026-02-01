@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.opmodes;
 
 import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -8,10 +9,13 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
+import com.acmerobotics.dashboard.FtcDashboard;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.teamcode.DECODERobotConstants;
 import org.firstinspires.ftc.teamcode.library.NGMotor;
+import org.firstinspires.ftc.teamcode.roadrunner.MecanumDrive;
 import org.firstinspires.ftc.teamcode.subsystems.DecodeCAM;
 import org.firstinspires.ftc.teamcode.subsystems.MecaTank;
 import org.firstinspires.ftc.teamcode.subsystems.TargetingComputer;
@@ -21,7 +25,10 @@ import com.acmerobotics.roadrunner.Pose2d;
 @Config
 @TeleOp
 public class ATeleOpDECODE extends LinearOpMode {
+    FtcDashboard dashboard;
+    Telemetry DStelemetry;
     MecaTank mecaTank;
+    MecanumDrive drive;
     private DecodeCAM camera;
     private TargetingComputer computer;
     ElapsedTime timer;
@@ -53,13 +60,15 @@ public class ATeleOpDECODE extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
 
+        telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
+
         timer = new ElapsedTime();
 
         rollers = hardwareMap.get(DcMotorEx.class, DECODERobotConstants.rollers);
         interTransfer = hardwareMap.get(DcMotorEx.class, DECODERobotConstants.interTransfer);
         transferRollers = hardwareMap.get(DcMotorEx.class, DECODERobotConstants.transferRollers);
         flywheels = new NGMotor(hardwareMap, telemetry, DECODERobotConstants.flywheels);
-        hoodAdjuster = hardwareMap.get(Servo.class, DECODERobotConstants.hoodAdjuster);
+        hoodAdjuster = hardwareMap.get(Servo.class, "hoodAdjuster");
 
         mecaTank = new MecaTank(hardwareMap, telemetry, timer);
 
@@ -158,6 +167,7 @@ public class ATeleOpDECODE extends LinearOpMode {
 
         while (!isStopRequested() && opModeIsActive()) {
 
+            mecaTank.updatePoseEstimate();
             mecaTank.updateAutoAlign();
             double currentSpeed = mecaTank.getRobotVelocity();
 
@@ -165,10 +175,33 @@ public class ATeleOpDECODE extends LinearOpMode {
             double interTransferCurrent = interTransfer.getCurrent(CurrentUnit.MILLIAMPS);
             double transferCurrent = transferRollers.getCurrent(CurrentUnit.MILLIAMPS);
             boolean autoReset = false;
-            flywheels.updateFlywheels();
+
+            flywheels.updateFlywheels(gamepad2.right_trigger > 0.1);
 
             Pose2d rawOdo = mecaTank.getPoseEstimate();
             Pose2d rawCam = camera.getAbsoluteRobotPose();
+
+
+                boolean isShooting = gamepad2.right_trigger > 0.1;
+
+                if (isShooting) {
+
+                    mecaTank.overrideDriveIfShooting(true);
+
+                    if(computer.getDistanceToGoal() > 110){
+                        rollers.setPower(0.6);
+                        interTransfer.setPower(0.5);
+                        transferRollers.setPower(0.5);
+                    }else{
+                        shoot();
+                    }
+                } else {
+                    transferRollers.setPower(0);
+                    mecaTank.overrideDriveIfShooting(false);
+                    // Manual Drive
+                    mecaTank.setDrivePowers(gamepad1.left_stick_y, gamepad1.right_stick_y, gamepad1.left_trigger, gamepad1.right_trigger);
+                }
+
 
             if (autoAimActive) {
                 rawCam = null;
@@ -178,7 +211,7 @@ public class ATeleOpDECODE extends LinearOpMode {
 
             mecaTank.setPoseEstimate(smartPose);
 
-            // Update Calibration Status for Driver
+            // Update Calibration Status
             if (computer.getConfidence() > 30.0) hasCalibrated = true;
 
             double rawStrafe = -gamepad1.right_stick_x;
@@ -190,11 +223,11 @@ public class ATeleOpDECODE extends LinearOpMode {
             boolean hoodUp = gamepad2.dpad_right;
             boolean hoodDown = gamepad2.dpad_left;
 
-            if (gamepad1.right_stick_button || gamepad1.left_stick_button) {
+            /*if (gamepad1.right_stick_button) {
                 autoAimActive = true;
-            } else if (gamepad1.y) {
+            } else if (gamepad1.left_stick_button) {
                 autoAimActive = false;
-            }
+            }*/
 
             if (autoAimActive) {
 
@@ -211,10 +244,9 @@ public class ATeleOpDECODE extends LinearOpMode {
 
                 telemetry.addData("TARGET", "LOCKED");
 
-            } else {
-                // Manual Drive
-                mecaTank.setDrivePowers(gamepad1.left_stick_y, gamepad1.right_stick_y, gamepad1.left_trigger, gamepad1.right_trigger);
             }
+
+
 
             boolean PosOverride = (Math.abs(gamepad1.right_stick_y) > 0.2 || Math.abs(gamepad1.left_stick_y) > 0.2);
 
@@ -246,7 +278,7 @@ public class ATeleOpDECODE extends LinearOpMode {
 
             if (startIntake) {
                 rollers.setPower(1.0);
-                interTransfer.setPower(0.7);
+                interTransfer.setPower(1.0);
                 transferRollers.setPower(0);
                 isIntaking = true;
             }
@@ -258,13 +290,13 @@ public class ATeleOpDECODE extends LinearOpMode {
             }
 
             if (isIntaking) {
-                if (intakeCurrent > 2000) {
+                if (intakeCurrent > 3000) {
 
                     if (highCurrentStartTime == 0) {
                         highCurrentStartTime = System.currentTimeMillis();
                     }
 
-                    else if ((System.currentTimeMillis() - highCurrentStartTime) > 400) {
+                    else if ((System.currentTimeMillis() - highCurrentStartTime) > 40) {
                         resetOuttake();
                         isIntaking = false;
                         highCurrentStartTime = 0;
@@ -276,9 +308,7 @@ public class ATeleOpDECODE extends LinearOpMode {
             }
 
 
-            if(gamepad2.right_trigger > 0.1){
-                shoot();
-            } else if(gamepad2.dpad_up){
+           if(gamepad2.dpad_up){
                 flywheels.setCustomVelocityPID(shooterCloseVel, 0.0092, 0.016, 0.0001, 0.000426);
                 hoodAdjuster.setPosition(hoodClosePos);
                 isAutoVel = false;
@@ -311,7 +341,8 @@ public class ATeleOpDECODE extends LinearOpMode {
             if(isAutoVel) {
                 TargetingComputer.ShotData solution = computer.getShooterSolution();
 
-                flywheels.setCustomVelocityPID(solution.velocity, 0.012, 0.017, 0.0002, 0.000426);
+                //flywheels.setCustomVelocityPID(solution.velocity, 0.05, 0, 0, 0.000428);
+                flywheels.setCustomVelocityPID(solution.velocity, 0.045, 0, 0, 0.00047);
 
                 hoodPos = solution.hoodPosition;
 

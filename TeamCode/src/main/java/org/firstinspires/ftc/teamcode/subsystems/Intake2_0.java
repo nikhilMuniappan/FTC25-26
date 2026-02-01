@@ -99,7 +99,7 @@ public class Intake2_0 {
     }
     public void updateVelocity(){
         if(DECODERobotConstants.flywheelsActive) {
-            flywheels.updateFlywheels();
+            flywheels.updateFlywheels(transferRollers.getPower() > 0);
         }
     }
     /*public Action updateFlywheelPID(){
@@ -110,7 +110,7 @@ public class Intake2_0 {
 
         @Override
             public boolean run(@NonNull TelemetryPacket telemetryPacket) {
-                flywheels.updateFlywheels();
+                flywheels.updateFlywheels(transferRollers.getPower() > 0);
 
                 telemetry.addData("FW Current Vel", "%.1f", flywheels.getVelocity());
 

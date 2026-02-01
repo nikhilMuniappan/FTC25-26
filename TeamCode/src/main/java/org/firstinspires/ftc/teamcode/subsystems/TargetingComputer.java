@@ -37,11 +37,11 @@ public class TargetingComputer {
         this.lastCameraUpdate = new ElapsedTime();
 
         // BALLISTICS TABLE (Distance, ShotData)
-        ballisticTable.put(24.0,   new ShotData(1220, 1.0)); // Point Blank
-        ballisticTable.put(35.0,  new ShotData(1250.0, 1.0)); // Close-Close
-        ballisticTable.put(52.0,  new ShotData(1320.0, 0.9)); // Close-Mid
-        ballisticTable.put(72.0,  new ShotData(1420.0, 0.8)); // Close-Far
-        ballisticTable.put(120.0, new ShotData(1630.0, 0.7)); // Far Zone
+        ballisticTable.put(24.0, new ShotData(1050.0, 1.0)); // Point Blank
+        ballisticTable.put(35.0, new ShotData(1080.0, 1.0)); // Close-Close
+        ballisticTable.put(52.0, new ShotData(1120.0, 1.0)); // Close-Mid
+        ballisticTable.put(72.0, new ShotData(1170.0, 0.9)); // Close-Far
+        ballisticTable.put(120.0, new ShotData(1560.0, 0.65)); // Far Zone
     }
 
     public Pose2d update(Pose2d odoPose, Pose2d camPose, double robotVel) {

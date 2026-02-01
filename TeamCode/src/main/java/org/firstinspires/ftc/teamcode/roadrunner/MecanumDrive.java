@@ -68,7 +68,12 @@ import java.util.concurrent.TimeUnit;
 
 @Config
 public final class MecanumDrive {
+    public Pose2d lockedPose = null;
+    public static double LOCK_XY_GAIN = 0.08;
+    public static double LOCK_HEADING_GAIN = 0.7;
+
     public static class Params {
+        
         // IMU orientation
        public RevHubOrientationOnRobot.LogoFacingDirection logoFacingDirection =
                 RevHubOrientationOnRobot.LogoFacingDirection.LEFT;
@@ -106,7 +111,48 @@ public final class MecanumDrive {
 
     }
     public static Params PARAMS = new Params();
+    public void updateLock(boolean isShooting) {
+        // 1. If we are NOT shooting, just reset and do nothing
+        if (!isShooting) {
+            lockedPose = null;
+            return; // Let TeleOp handle driving
+        }
 
+        // 2. If this is the FIRST frame of shooting, lock the current position
+        if (lockedPose == null) {
+            lockedPose = pose; // 'pose' is the variable RR updates automatically
+        }
+
+        // 3. Calculate the error (Where we are vs Where we want to be)
+        // Field-centric difference
+        Vector2d positionError = lockedPose.position.minus(pose.position);
+
+        // 4. Rotate that error into the ROBOT'S perspective
+        // (If the error is "North" but we are facing "East", we need to drive "Left")
+        Vector2d robotRelativeError = pose.heading.inverse().times(positionError);
+
+        // 5. Calculate Heading Error
+        // .log() converts the Rotation2d difference into a number (radians)
+        double targetHeading = lockedPose.heading.toDouble();
+        double currentHeading = pose.heading.toDouble();
+
+// 2. Subtract
+        double headingError = targetHeading - currentHeading;
+
+// 3. Normalize (Handle the -180 to 180 wrap manually)
+        while (headingError > Math.PI)  headingError -= 2 * Math.PI;
+        while (headingError <= -Math.PI) headingError += 2 * Math.PI;
+
+        // 6. Apply the P-Controller Gains
+        // We send this to setDrivePowers, which takes (Forward, Strafe, Turn)
+        setDrivePowers(new PoseVelocity2d(
+                new Vector2d(
+                        robotRelativeError.x * LOCK_XY_GAIN,
+                        robotRelativeError.y * LOCK_XY_GAIN
+                ),
+                headingError * LOCK_HEADING_GAIN
+        ));
+    }
     public final MecanumKinematics kinematics = new MecanumKinematics(
             PARAMS.inPerTick * PARAMS.trackWidthTicks, PARAMS.inPerTick / PARAMS.lateralInPerTick);
 

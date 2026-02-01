@@ -1,5 +1,9 @@
 package org.firstinspires.ftc.teamcode.library;
 
+import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.hardwareMap;
+
+import static java.lang.Thread.sleep;
+
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -7,6 +11,7 @@ import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 
 import java.util.concurrent.TimeUnit;
@@ -72,22 +77,34 @@ public class NGMotor extends Subsystem {
 
     private double flywheelIntegralSum = 0;
     private double flywheelLastError = 0;
+    HardwareMap hardwareMap;
     private ElapsedTime pidTimer = new ElapsedTime();
-
     Telemetry telemetry;
+
+    //Flywheel PIDF Controller Constants
+    double kP_Recovery = 0.04;
+    double kP_Stable  = 0.0085;
+    public static double kLoad = 0.75;
+
+    double ALPHA = 0.7;
+    double RECOVERY_THRESHOLD = 60.0;
+    double lastSmoothVelocity = 0.0;
+
+    ElapsedTime feederTimer = new ElapsedTime();
+    boolean wasFeederActive = false; // Tracks state changes
+    public static double kRamp = 0.06;
+
 
     public NGMotor(HardwareMap hardwareMap, Telemetry telemetry, String name) {
         this.telemetry = telemetry;
         this.name = name;
+        this.hardwareMap = hardwareMap;
         pid_motor = hardwareMap.get(DcMotorEx.class, name);
 
         pid_motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         pid_motor.setDirection(DcMotor.Direction.FORWARD);
 
-
-
         timer = new ElapsedTime();
-
     }
     public void setCustomVelocityPID(double targetVel, double P, double I, double D, double F) {
         this.targetVelocity = targetVel;
@@ -100,37 +117,75 @@ public class NGMotor extends Subsystem {
         this.flywheelLastError = 0;
         this.pidTimer.reset();
     }
-    public void updateFlywheels() {
-        double currentVelocity = pid_motor.getVelocity();
+    public void updateFlywheels(boolean isFeederActive) {
+
+        double rawVelocity = pid_motor.getVelocity();
+        double currentVoltage = hardwareMap.voltageSensor.iterator().next().getVoltage();
         double loopTime = pidTimer.seconds();
         pidTimer.reset();
 
-        double error = targetVelocity - currentVelocity;
+        if (loopTime <= 0) loopTime = 0.001;
 
-        double P_Term = kP * error;
+        double smoothVelocity = (ALPHA * rawVelocity) + ((1 - ALPHA) * lastSmoothVelocity);
+        lastSmoothVelocity = smoothVelocity;
 
-        flywheelIntegralSum += error * loopTime;
+        double error = targetVelocity - smoothVelocity;
 
-        double I_Term = kI * integralSum;
-        if (flywheelIntegralSum > 1) flywheelIntegralSum = 1;
-        if (flywheelIntegralSum < -1) flywheelIntegralSum = -1;
+        double P_Term;
+        if (error > RECOVERY_THRESHOLD) {
+            P_Term = error * kP_Recovery;
+        } else {
+            P_Term = error * kP_Stable;
+        }
 
-        double derivative = (loopTime > 0) ? (error - flywheelLastError) / loopTime : 0;
+
+        if (Math.abs(error) < RECOVERY_THRESHOLD) {
+            flywheelIntegralSum += error * loopTime;
+        } else {
+            flywheelIntegralSum = 0;
+        }
+
+        double maxISum = (kI != 0) ? 0.1 / kI : 0;
+        if (flywheelIntegralSum > maxISum) flywheelIntegralSum = maxISum;
+        if (flywheelIntegralSum < -maxISum) flywheelIntegralSum = -maxISum;
+
+        double I_Term = kI * flywheelIntegralSum;
+
+        double derivative = (error - flywheelLastError) / loopTime;
         flywheelLastError = error;
         double D_Term = kD * derivative;
 
         double F_Term = kF * targetVelocity;
 
-        double finalPower = P_Term + I_Term + D_Term + F_Term;
+        double Load_Term = 0;
+        if (isFeederActive) {
+            // Timer reset
+            if (!wasFeederActive) {
+                feederTimer.reset();
+                wasFeederActive = true;
+            }
 
-        finalPower = Range.clip(finalPower, -1, 1);
+            // Base boost + (Extra boost * seconds held)
+            Load_Term = kLoad + (feederTimer.seconds() * kRamp);
+
+        } else {
+            // Reset state when not shooting
+            wasFeederActive = false;
+            Load_Term = 0;
+        }
+
+        double calculatedPower = P_Term + I_Term + D_Term + F_Term + Load_Term;
+
+        double compensatedPower = calculatedPower * (12.0 / currentVoltage);
+
+        double finalPower = Range.clip(compensatedPower, -1.0, 1.0);
         pid_motor.setPower(finalPower);
 
-        //telemetry.addData("P/I/D/F Terms", "P: %.3f, I: %.3f, D: %.3f, F: %.3f", P_Term, I_Term, D_Term, F_Term);
-        //telemetry.addData("Final Power", finalPower);
-        //telemetry.addData("Target Vel: ", targetVelocity);
-        telemetry.addData("Current Velocity: ", currentVelocity);
-        telemetry.addData("Error: ", error);
+        // Tuning Telemetry
+        telemetry.addData("Current Velocity", rawVelocity);
+        telemetry.addData("Error", error);
+
+        telemetry.addData("Load Boost", isFeederActive ? "ACTIVE" : "OFF");
     }
 
     public void addPower(double power){

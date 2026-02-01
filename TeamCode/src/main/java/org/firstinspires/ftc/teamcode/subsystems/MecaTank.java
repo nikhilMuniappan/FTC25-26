@@ -22,6 +22,7 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.util.ElapsedTime;
+import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
@@ -99,6 +100,9 @@ public class MecaTank extends Subsystem {
     private static final double TRACK_WIDTH_INCHES = 10.81983;
     private static final double DISTANCE_TOLERANCE = 1.0;
     private static final double HEADING_TOLERANCE = 2.0;
+    private double lockTargetLF, lockTargetLR, lockTargetRF, lockTargetRR;
+    private boolean wasLocked = false;
+    private double kP_DRIVE_LOCK = 0.005;
     private ElapsedTime timer;
     public MecanumDrive drive;
     public DecodeCAM camera;
@@ -119,6 +123,11 @@ public class MecaTank extends Subsystem {
         backLeft.setDirection(DcMotor.Direction.REVERSE);
         frontLeft.setDirection(DcMotor.Direction.REVERSE);
 
+        backRight.setZeroPowerBehaviour(DcMotor.ZeroPowerBehavior.BRAKE);
+        frontRight.setZeroPowerBehaviour(DcMotor.ZeroPowerBehavior.BRAKE);
+        backLeft.setZeroPowerBehaviour(DcMotor.ZeroPowerBehavior.BRAKE);
+        frontLeft.setZeroPowerBehaviour(DcMotor.ZeroPowerBehavior.BRAKE);
+
         backLeft.init();
         backRight.init();
 
@@ -127,6 +136,9 @@ public class MecaTank extends Subsystem {
 
         drive = new MecanumDrive(hardwareMap, startPose);
         imu.get().resetYaw();
+    }
+    public void overrideDriveIfShooting(boolean isShooting) {
+        drive.updateLock(isShooting);
     }
 
     public void updateAutoAlign() {
@@ -171,7 +183,7 @@ public class MecaTank extends Subsystem {
     }
     private PoseVelocity2d currentVelocity = new PoseVelocity2d(new Vector2d(0, 0), 0);
     public void updatePoseEstimate() {
-        currentVelocity = drive.updatePoseEstimate();
+        drive.updatePoseEstimate();
     }
 
     public double getRobotVelocity() {

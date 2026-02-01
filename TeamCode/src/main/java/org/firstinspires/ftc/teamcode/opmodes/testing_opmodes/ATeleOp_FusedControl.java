@@ -178,7 +178,7 @@ public class ATeleOp_FusedControl extends LinearOpMode{
 
         while (!isStopRequested() && opModeIsActive()) {
             mecaTank.updateAutoAlign();
-            flywheels.updateFlywheels();
+            flywheels.updateFlywheels(gamepad2.right_trigger > 0);
             Pose2d currentPose = mecaTank.getPoseEstimate();
 
             if (!autoAimActive) {
